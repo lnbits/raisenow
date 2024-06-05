@@ -19,17 +19,17 @@ async def create_raisenow(
     raisenow_id = urlsafe_short_hash()
     await db.execute(
         """
-        INSERT INTO raisenow.raises (id, wallet, name, description, closing_date, lnurlpay)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO raisenow.raises (id, wallet, name, description, background_image, header_image, live_dates)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
             raisenow_id,
             wallet_id,
             data.name,
             data.description,
-            data.total,
-            data,closing_date,
-            data.lnurlpay,
+            data.background_image,
+            data.header_image,
+            data.live_dates,
         ),
     )
     raisenow = await get_raisenow(raisenow_id, req)

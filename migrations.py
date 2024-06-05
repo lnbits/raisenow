@@ -12,10 +12,10 @@ async def m001_initial(db):
             id TEXT PRIMARY KEY,
             wallet TEXT NOT NULL,
             name TEXT NOT NULL,
-            description TEXT NOT NULL,
-            background_image TEXT NOT NULL,
-            header_image TEXT NOT NULL,
-            live_dates TEXT NOT NULL,
+            description TEXT,
+            background_image TEXT,
+            header_image TEXT,
+            live_dates TEXT,
             total INTEGER DEFAULT 0,
             lnurlpay TEXT
         );
@@ -32,7 +32,7 @@ async def m002_initial(db):
             id TEXT PRIMARY KEY,
             raise TEXT NOT NULL,
             name TEXT NOT NULL,
-            description TEXT NOT NULL,
+            description TEXT,
             total INTEGER DEFAULT 0,
             lnurlpay TEXT
         );
