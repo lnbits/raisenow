@@ -44,7 +44,7 @@ async def get_raisenow(
     )
     if not row:
         return None
-    rowAmended = raisenow(**row)
+    rowAmended = RaiseNow(**row)
     if req:
         rowAmended.lnurlpay = lnurl_encode(
             req.url_for("raisenow.api_lnurl_pay", raisenow_id=row.id)._url
@@ -62,7 +62,7 @@ async def get_raisenows(
     rows = await db.fetchall(
         f"SELECT * FROM raisenow.raises WHERE wallet IN ({q})", (*wallet_ids,)
     )
-    tempRows = [raisenow(**row) for row in rows]
+    tempRows = [RaiseNow(**row) for row in rows]
     if req:
         for row in tempRows:
             row.lnurlpay = lnurl_encode(
@@ -75,7 +75,6 @@ async def update_raisenow(
     raisenow_id: str, req: Optional[Request] = None, **kwargs
 ) -> RaiseNow:
     q = ", ".join([f"{field[0]} = ?" for field in kwargs.items()])
-    logger.debug(kwargs.items())
     await db.execute(
         f"UPDATE raisenow.raises SET {q} WHERE id = ?",
         (*kwargs.values(), raisenow_id),
@@ -127,7 +126,7 @@ async def get_participant(
     )
     if not row:
         return None
-    rowAmended = raisenow(**row)
+    rowAmended = Participant(**row)
     if req:
         rowAmended.lnurlpay = lnurl_encode(
             req.url_for("raisenow.api_lnurl_pay", raisenow_id=row.id)._url
@@ -145,7 +144,7 @@ async def get_participants(
     rows = await db.fetchall(
         f"SELECT * FROM raisenow.participants WHERE wallet IN ({q})", (*wallet_ids,)
     )
-    tempRows = [raisenow(**row) for row in rows]
+    tempRows = [Participant(**row) for row in rows]
     if req:
         for row in tempRows:
             row.lnurlpay = lnurl_encode(
@@ -158,7 +157,6 @@ async def update_participant(
     raisenow_id: str, req: Optional[Request] = None, **kwargs
 ) -> Participant:
     q = ", ".join([f"{field[0]} = ?" for field in kwargs.items()])
-    logger.debug(kwargs.items())
     await db.execute(
         f"UPDATE raisenow.participants SET {q} WHERE id = ?",
         (*kwargs.values(), raisenow_id),

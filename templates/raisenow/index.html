@@ -228,16 +228,20 @@
             this.g.user.wallets[0].inkey
           )
           .then(function (response) {
+            console.log(response.data)
             self.ranow = response.data.map(function (obj) {
               return mapraisenow(obj)
             })
           })
       },
       sendraisenowData() {
+        console.log(this.formDialog.data.live_dates)
         const data = {
           name: this.formDialog.data.name,
-          lnurlwithdrawamount: this.formDialog.data.lnurlwithdrawamount,
-          lnurlpayamount: this.formDialog.data.lnurlpayamount
+          description: this.formDialog.data.description,
+          background_image: this.formDialog.data.background_image,
+          header_image: this.formDialog.data.header_image,
+          live_dates: String(this.formDialog.data.live_dates.from + ',' + this.formDialog.data.live_dates.to)
         }
         const wallet = _.findWhere(this.g.user.wallets, {
           id: this.formDialog.data.wallet
@@ -256,11 +260,9 @@
         this.formDialog.data = {
           ...raisenow
         }
-        if (this.formDialog.data.tip_wallet != '') {
-          this.formDialog.advanced.tips = true
-        }
-        if (this.formDialog.data.withdrawlimit >= 1) {
-          this.formDialog.advanced.otc = true
+        this.formDialog.data.live_dates = {
+          from: raisenow.live_dates.split(',')[0],
+          to: raisenow.live_dates.split(',')[1]
         }
         this.formDialog.show = true
       },
