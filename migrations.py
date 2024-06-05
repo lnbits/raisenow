@@ -15,7 +15,6 @@ async def m001_initial(db):
             description TEXT NOT NULL,
             background_image TEXT NOT NULL,
             header_image TEXT NOT NULL,
-            description TEXT NOT NULL,
             live_dates TEXT NOT NULL,
             total INTEGER DEFAULT 0,
             lnurlpay TEXT
