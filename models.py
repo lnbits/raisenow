@@ -43,6 +43,7 @@ class CreateParticipantData(BaseModel):
     name: str
     raisenow: str
     description: Optional[str]
+    profile_image: Optional[str]
     total: Optional[int]
 
 
@@ -51,6 +52,7 @@ class Participant(BaseModel):
     name: str
     raisenow: str
     description: Optional[str]
+    profile_image: Optional[str]
     total: Optional[int]
     lnurlpay: Optional[str]
 

@@ -101,8 +101,8 @@ async def create_participant(
     participant_id = urlsafe_short_hash()
     await db.execute(
         """
-        INSERT INTO raisenow.participants (id, wallet, name, raisenow, description, total)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO raisenow.participants (id, wallet, name, raisenow, description, profile_image, total)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
             participant_id,
@@ -110,6 +110,7 @@ async def create_participant(
             data.name,
             data.raisenow,
             data.description,
+            data.profile_image,
             data.total,
         ),
     )

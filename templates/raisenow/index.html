@@ -8,7 +8,7 @@
   <div class="col-12 col-md-8 col-lg-7 q-gutter-y-md">
     <q-card>
       <q-card-section>
-        <q-btn unelevated color="primary" @click="formDialog.show = true">New raisenow</q-btn>
+        <q-btn unelevated color="primary" @click="RaiseFormDialog.show = true">New raisenow</q-btn>
       </q-card-section>
     </q-card>
 
@@ -24,16 +24,28 @@
         </div>
         <q-table dense flat :data="ranow" row-key="id" :columns="ranowTable.columns"
           :pagination.sync="ranowTable.pagination">
-          <raisenow v-slot:header="props">
+          <template v-slot:header="props">
             <q-tr :props="props">
+              <q-th auto-width></q-th>
               <q-th v-for="col in props.cols" :key="col.name" :props="props">
                 ${ col.label }
               </q-th>
             </q-tr>
-          </raisenow>
+          </template>
 
           <template v-slot:body="props">
             <q-tr :props="props">
+              <q-td auto-width>
+                <q-btn
+                  size="sm"
+                  color="accent"
+                  round
+                  dense
+                  @click="props.expand = !props.expand"
+                  :icon="props.expand ? 'expand_less' : 'expand_more'"
+                ><q-tooltip>Participants</q-tooltip></q-btn>
+              </q-td>
+
               <q-td v-for="col in props.cols" :key="col.name" :props="props">
                 <div v-if="col.field == 'total'">${ col.value / 1000} sats</div>
                 <div v-else>${ col.value }</div>
@@ -48,16 +60,94 @@
 
               <q-td>
                 <q-btn flat dense size="xs" @click="updateraisenowForm(props.row.id)" icon="edit" color="light-blue">
-                  <q-tooltip> Edit copilot </q-tooltip>
+                  <q-tooltip> Edit raise </q-tooltip>
                 </q-btn>
               </q-td>
 
               <q-td>
                 <q-btn flat dense size="xs" @click="deleteraisenow(props.row.id)" icon="cancel" color="pink">
-                  <q-tooltip> Delete copilot </q-tooltip>
+                  <q-tooltip> Delete raise </q-tooltip>
                 </q-btn>
               </q-td>
 
+            </q-tr>
+            <q-tr v-show="props.expand" :props="props">
+              <q-td colspan="100%">
+                <div class="row items-center q-mb-lg">
+                  <div class="col-12">
+                        <div>
+                          <div class="row items-center no-wrap q-mb-md">
+                            <div class="col-12 q-pr-lg">
+                              <q-btn
+                                color="primary"
+                                unelevated
+                                @click="openParticipantDialog(props.row.id)"
+                                class="float-left q-my-sm"
+                                >Add Participant</q-btn
+                              >
+                              <q-btn
+                                color="grey"
+                                outline
+                                unelevated
+                                @click="deleteAllParticipants(props.row.id)"
+                                class="float-left q-my-sm q-ml-sm"
+                                >Delete All</q-btn
+                              >
+                            </div>
+                          </div>
+
+                          <div class="row items-center no-wrap q-mb-md">
+                            <div class="col-12">
+                              <q-table
+                                flat
+                                dense
+                                :data="participantArray(props.row.id)"
+                                row-key="id"
+                                :columns="particpantsTable.columns"
+                                :pagination.sync="particpantsTable.pagination"
+                              >
+                                <template v-slot:body="props">
+                                  <q-tr :props="props">
+                                    <q-td auto-width>
+                                      <q-btn
+                                        size="sm"
+                                        color="pink"
+                                        dense
+                                        @click="deleteParticipant(props.row.id)"
+                                        icon="delete"
+                                      ></q-btn>
+                                    </q-td>
+                                    <q-td auto-width>
+                                      <q-btn
+                                        size="sm"
+                                        color="accent"
+                                        dense
+                                        @click="openParticipantDialog(props.row.id)"
+                                        icon="edit"
+                                      ></q-btn>
+                                    </q-td>
+
+                                    <q-td v-for="col in props.cols" :key="col.name" :props="props">
+                                      <div>${ col.value }</div>
+                                    </q-td>
+                                    <q-td>
+                                      <q-btn flat dense size="xs" @click="updateparticipantForm(props.row.id)" icon="edit" color="light-blue">
+                                        <q-tooltip> Edit participant </q-tooltip>
+                                      </q-btn>
+                                    </q-td>
+                      
+                                    <q-td>
+                                      <q-btn flat dense size="xs" @click="deleteparticipant(props.row.id)" icon="cancel" color="pink">
+                                        <q-tooltip> Delete participant </q-tooltip>
+                                      </q-btn>
+                                    </q-td>
+                                  </q-tr>
+                                </template>
+                              </q-table>
+                            </div>
+                          </div>
+                        </div>
+              </q-td>
             </q-tr>
           </template>
 
@@ -85,28 +175,54 @@
   </div>
 
   <!--/////////////////////////////////////////////////-->
-  <!--//////////////FORM DIALOG////////////////////////-->
+  <!--//////////////RAISE FORM DIALOG////////////////////////-->
   <!--/////////////////////////////////////////////////-->
 
-  <q-dialog v-model="formDialog.show" position="top" @hide="closeFormDialog">
+  <q-dialog v-model="RaiseFormDialog.show" position="top" @hide="closeRaiseFormDialog">
     <q-card class="q-pa-lg q-pt-xl" style="width: 500px">
       <q-form @submit="sendraisenowData" class="q-gutter-md">
-        <q-input filled dense v-model.trim="formDialog.data.name" label="Name *"
+        <q-input filled dense v-model.trim="RaiseFormDialog.data.name" label="Name *"
           placeholder="Name for your raise"></q-input>
-          <q-input filled dense v-model.trim="formDialog.data.description" label="Description (optional)"
+          <q-input filled dense v-model.trim="RaiseFormDialog.data.description" label="Description (optional)"
           placeholder="optional description for your raise "></q-input>
-          <q-select filled dense emit-value v-model="formDialog.data.wallet" :options="g.user.walletOptions"
+          <q-select filled dense emit-value v-model="RaiseFormDialog.data.wallet" :options="g.user.walletOptions"
           label="Wallet *"></q-select>
-          <q-input filled dense v-model.trim="formDialog.data.background_image" label="Public page background image URL (optional)"
+          <q-input filled dense v-model.trim="RaiseFormDialog.data.background_image" label="Public page background image URL (optional)"
           placeholder="Optional background image for the public page"></q-input>
-          <q-input filled dense v-model.trim="formDialog.data.header_image" label="Public page header image URL (optional)"
+          <q-input filled dense v-model.trim="RaiseFormDialog.data.header_image" label="Public page header image URL (optional)"
           placeholder="Optional header image, will replace the title and description"></q-input>
-          <q-toggle v-model="formDialog.advanced_time" label="Select specific 'live dates' for fundraise (optional)"></q-toggle>
-          <q-date v-if="formDialog.advanced_time" v-model="formDialog.data.live_dates" range title="Live dates"></q-date>
+          <q-toggle v-model="RaiseFormDialog.advanced_time" label="Select specific 'live dates' for fundraise (optional)"></q-toggle>
+          <q-date v-if="RaiseFormDialog.advanced_time" v-model="RaiseFormDialog.data.live_dates" range title="Live dates"></q-date>
         <div class="row q-mt-lg">
-          <q-btn v-if="formDialog.data.id" unelevated color="primary" type="submit" color="primary">Update raisenow</q-btn>
+          <q-btn v-if="RaiseFormDialog.data.id" unelevated color="primary" type="submit" color="primary">Update raisenow</q-btn>
           <q-btn v-else unelevated color="primary"
-            :disable="formDialog.data.name == null || formDialog.data.wallet == null"
+            :disable="RaiseFormDialog.data.name == null || RaiseFormDialog.data.wallet == null"
+            type="submit">Create raisenow</q-btn>
+          <q-btn v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
+        </div>
+      </q-form>
+    </q-card>
+  </q-dialog>
+
+  <!--/////////////////////////////////////////////////-->
+  <!--///////////PARTICIPANTS FORM DIALOG//////////////-->
+  <!--/////////////////////////////////////////////////-->
+
+  <q-dialog v-model="ParticpantsFormDialog.show" position="top" @hide="closeParticpantsFormDialog">
+    <q-card class="q-pa-lg q-pt-xl" style="width: 500px">
+      <q-form @submit="sendraisenowData" class="q-gutter-md">
+        <q-input filled dense v-model.trim="RaiseFormDialog.data.name" label="Name *"
+          placeholder="Name for your raise"></q-input>
+          <q-input filled dense v-model.trim="RaiseFormDialog.data.description" label="Description (optional)"
+          placeholder="optional description for your raise "></q-input>
+          <q-select filled dense emit-value v-model="RaiseFormDialog.data.raise" :options="ranow"
+          label="Raise *"></q-select>
+          <q-input filled dense v-model.trim="RaiseFormDialog.data.profile_image" label="Profile image for the participant (optional)"
+          placeholder="Optional profile image"></q-input>
+        <div class="row q-mt-lg">
+          <q-btn v-if="RaiseFormDialog.data.id" unelevated color="primary" type="submit" color="primary">Update raisenow</q-btn>
+          <q-btn v-else unelevated color="primary"
+            :disable="RaiseFormDialog.data.name == null || RaiseFormDialog.data.wallet == null"
             type="submit">Create raisenow</q-btn>
           <q-btn v-close-popup flat color="grey" class="q-ml-auto">Cancel</q-btn>
         </div>
@@ -171,6 +287,14 @@
     obj.raisenow = ['/raisenow/', obj.id].join('')
     return obj
   }
+  const mapparticipants = obj => {
+    obj.date = Quasar.utils.date.formatDate(
+      new Date(obj.time * 1000),
+      'YYYY-MM-DD HH:mm'
+    )
+    obj.participants = ['/participants/', obj.id].join('')
+    return obj
+  }
   new Vue({
     el: '#vue',
     mixins: [windowMixin],
@@ -180,6 +304,7 @@
         invoiceAmount: 10,
         qrValue: 'lnurlpay',
         ranow: [],
+        participants: [],
         ranowTable: {
           columns: [
             { name: 'id', align: 'left', label: 'ID', field: 'id' },
@@ -196,10 +321,24 @@
             rowsPerPage: 10
           }
         },
-        formDialog: {
+        particpantsTable: {
+          columns: [
+            { name: 'id', align: 'left', label: 'ID', field: 'id' },
+            { name: 'name', align: 'left', label: 'Name', field: 'name' },
+            { name: 'total', align: 'left', label: 'Total', field: 'total' }
+          ],
+          pagination: {
+            rowsPerPage: 10
+          }
+        },
+        RaiseFormDialog: {
           show: false,
           data: {},
           advanced_time: false
+        },
+        ParticpantsFormDialog: {
+          show: false,
+          data: {}
         },
         urlDialog: {
           show: false,
@@ -211,12 +350,12 @@
     ///////////////////////////////////////////////////
     ////////////////METHODS FUNCTIONS//////////////////
     ///////////////////////////////////////////////////
-
     methods: {
-      closeFormDialog() {
-        this.formDialog.show = false
-        this.formDialog.data = {}
-        this.formDialog.advanced_time = false
+      ///////////////// Raises ///////////////////
+      closeRaiseFormDialog() {
+        this.RaiseFormDialog.show = false
+        this.RaiseFormDialog.data = {}
+        this.RaiseFormDialog.advanced_time = false
       },
       getraisenows: function () {
         var self = this
@@ -235,21 +374,21 @@
           })
       },
       sendraisenowData() {
-        console.log(this.formDialog.data.live_dates)
+        console.log(this.RaiseFormDialog.data.live_dates)
         const data = {
-          name: this.formDialog.data.name,
-          description: this.formDialog.data.description,
-          background_image: this.formDialog.data.background_image,
-          header_image: this.formDialog.data.header_image,
-          live_dates: String(this.formDialog.data.live_dates.from + ',' + this.formDialog.data.live_dates.to)
+          name: this.RaiseFormDialog.data.name,
+          description: this.RaiseFormDialog.data.description,
+          background_image: this.RaiseFormDialog.data.background_image,
+          header_image: this.RaiseFormDialog.data.header_image,
+          live_dates: String(this.RaiseFormDialog.data.live_dates.from + ',' + this.RaiseFormDialog.data.live_dates.to)
         }
         const wallet = _.findWhere(this.g.user.wallets, {
-          id: this.formDialog.data.wallet
+          id: this.RaiseFormDialog.data.wallet
         })
-        if (this.formDialog.data.id) {
-          data.id = this.formDialog.data.id
+        if (this.RaiseFormDialog.data.id) {
+          data.id = this.RaiseFormDialog.data.id
           data.wallet = wallet.id
-          data.total = this.formDialog.data.total
+          data.total = this.RaiseFormDialog.data.total
           this.updateraisenow(wallet, data)
         } else {
           this.createraisenow(wallet, data)
@@ -257,21 +396,21 @@
       },
       updateraisenowForm(tempId) {
         const raisenow = _.findWhere(this.ranow, { id: tempId })
-        this.formDialog.data = {
+        this.RaiseFormDialog.data = {
           ...raisenow
         }
-        this.formDialog.data.live_dates = {
+        this.RaiseFormDialog.data.live_dates = {
           from: raisenow.live_dates.split(',')[0],
           to: raisenow.live_dates.split(',')[1]
         }
-        this.formDialog.show = true
+        this.RaiseFormDialog.show = true
       },
       createraisenow(wallet, data) {
         LNbits.api
           .request('POST', '/raisenow/api/v1/ranow', wallet.adminkey, data)
           .then(response => {
             this.ranow.push(mapraisenow(response.data))
-            this.closeFormDialog()
+            this.closeRaiseFormDialog()
           })
           .catch(error => {
             LNbits.utils.notifyApiError(error)
@@ -290,7 +429,7 @@
               return obj.id == data.id
             })
             this.ranow.push(mapraisenow(response.data))
-            this.closeFormDialog()
+            this.closeRaiseFormDialog()
           })
           .catch(error => {
             LNbits.utils.notifyApiError(error)
@@ -322,28 +461,24 @@
       exportCSV: function () {
         LNbits.utils.exportCSV(this.ranowTable.columns, this.ranow)
       },
-      itemsArray(tempId) {
-        const raisenow = _.findWhere(this.ranow, { id: tempId })
-        return [...raisenow.itemsMap.values()]
-      },
-      openformDialog(id) {
+      openRaiseFormDialog(id) {
         const [tempId, itemId] = id.split(':')
         const raisenow = _.findWhere(this.ranow, { id: tempId })
         if (itemId) {
-          const item = raisenow.itemsMap.get(id)
-          this.formDialog.data = {
+          const item = raisenow.participantsMap.get(id)
+          this.RaiseFormDialog.data = {
             ...item,
             raisenow: tempId
           }
         } else {
-          this.formDialog.data.raisenow = tempId
+          this.RaiseFormDialog.data.raisenow = tempId
         }
-        this.formDialog.data.currency = raisenow.currency
-        this.formDialog.show = true
+        this.RaiseFormDialog.data.currency = raisenow.currency
+        this.RaiseFormDialog.show = true
       },
-      closeformDialog() {
-        this.formDialog.show = false
-        this.formDialog.data = {}
+      closeRaiseFormDialog() {
+        this.RaiseFormDialog.show = false
+        this.RaiseFormDialog.data = {}
       },
       openUrlDialog(id) {
         this.urlDialog.data = _.findWhere(this.ranow, { id })
@@ -352,38 +487,84 @@
         this.connectWebocket(this.urlDialog.data.id)
         this.urlDialog.show = true
       },
-      createInvoice(walletId, raisenowId) {
-        ///////////////////////////////////////////////////
-        ///Simple call to the api to create an invoice/////
-        ///////////////////////////////////////////////////
-        console.log(walletId)
-        const wallet = _.findWhere(this.g.user.wallets, {
-          id: walletId
-        })
-        const dataToSend = {
-          out: false,
-          amount: this.invoiceAmount,
-          memo: 'Invoice created by raisenow',
-          extra: {
-            tag: 'raisenow',
-            raisenowId: raisenowId
-          }
-        }
+      ///////////////// Participants ///////////////////
+      getparticipants: function (raID) {
+        var self = this
         LNbits.api
           .request(
-            'POST',
-            `/api/v1/payments`,
-            wallet.inkey,
-            dataToSend
+            'GET',
+            '/participants/api/v1/' + raID,
+            this.g.user.wallets[0].inkey
           )
-          .then(response => {
-            this.qrValue = response.data.payment_request
-          })
-          .catch(error => {
-            LNbits.utils.notifyApiError(error)
+          .then(function (response) {
+            console.log(response.data)
+            self.participants = response.data.map(function (obj) {
+              return mapparticipants(obj)
+            })
           })
       },
-      makeItRain() {
+      openParticipantDialog: function (id) {
+        this.ParticpantsFormDialog.data = {
+          raisenow: id
+        }
+        this.ParticpantsFormDialog.show = true
+      },
+      closeParticpantsFormDialog: function () {
+        this.ParticpantsFormDialog.show = false
+        this.ParticpantsFormDialog.data = {}
+      },
+      deleteAllParticipants: function (participantId) {
+    var self = this;
+    var raisenow = _.findWhere(this.participants, { id: participantId });
+
+    LNbits.utils
+        .confirmDialog('Are you sure you want to delete all participants?')
+        .onOk(function () {
+            var wallet = _.findWhere(self.g.user.wallets, { id: raisenow.wallet });
+            LNbits.api
+                .request(
+                    'DELETE',
+                    '/raisenow/api/v1/ranow/' + participantId + '/participants',
+                    wallet.adminkey
+                )
+                .then(function (response) {
+                    self.ranow = _.reject(self.ranow, function (obj) {
+                        return obj.id == participantId;
+                    })
+                })
+                .catch(function (error) {
+                    LNbits.utils.notifyApiError(error);
+                })
+        });
+},
+      deleteParticipant: function (participantId) {
+        var self = this
+        var raisenow = _.findWhere(this.ranow, { id: participantId })
+        LNbits.utils
+          .confirmDialog('Are you sure you want to delete this participant?')
+          .onOk(function () {
+            LNbits.api
+              .request(
+                'DELETE',
+                '/raisenow/api/v1/ranow/' + participantId + '/participants',
+                _.findWhere(self.g.user.wallets, { id: raisenow.wallet }).adminkey
+              )
+              .then(function (response) {
+                self.ranow = _.reject(self.ranow, function (obj) {
+                  return obj.id == participantId
+                })
+              })
+              .catch(function (error) {
+                LNbits.utils.notifyApiError(error)
+              })
+          })
+      },
+      participantArray: function(partId){
+        return this.participants.filter(function (obj) {
+          return obj.raisenow == partId
+        })
+      },
+      makeItRain: function () {
         document.getElementById("vue").disabled = true
         var end = Date.now() + (2 * 1000)
         var colors = ['#FFD700', '#ffffff']
@@ -413,10 +594,7 @@
         }
         frame()
       },
-      connectWebocket(wallet_id) {
-        //////////////////////////////////////////////////
-        ///wait for pay action to happen and do a thing////
-        ///////////////////////////////////////////////////
+      connectWebocket: function (wallet_id) {
         self = this
         if (location.protocol !== 'http:') {
           localUrl =
@@ -439,7 +617,7 @@
         this.connection.onmessage = function (e) {
           self.makeItRain()
         }
-      }
+      },
     },
 
     ///////////////////////////////////////////////////

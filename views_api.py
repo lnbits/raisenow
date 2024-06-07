@@ -137,97 +137,98 @@ async def api_raisenow_delete(
 
 ## Get all the records belonging to the user
 
-
-@raisenow_ext.get("/api/v1/participants", status_code=HTTPStatus.OK)
-async def api_raisenows(
-    req: Request,
-    all_wallets: bool = Query(False),
-    wallet: WalletTypeInfo = Depends(get_key_type),
+@raisenow_ext.get("/api/v1/participants/{raisenow_id}", status_code=HTTPStatus.OK)
+async def api_participants(
+    req: Request, raisenow_id: str, WalletTypeInfo=Depends(get_key_type)
 ):
-    wallet_ids = [wallet.wallet.id]
-    if all_wallets:
-        user = await get_user(wallet.wallet.user)
-        wallet_ids = user.wallet_ids if user else []
+    participants = await get_participants(raisenow_id, req)
+    if not participants:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
+        )
     return [
-        raisenow.dict() for raisenow in await get_raisenows(wallet_ids, req)
+        participant.dict() for participant in await get_participants(raisenow_id, req)
     ]
-
 
 ## Get a single record
 
 
-@raisenow_ext.get("/api/v1/participants/{raisenow_id}", status_code=HTTPStatus.OK)
-async def api_raisenow(
+@raisenow_ext.get("/api/v1/participant/{participant_id}", status_code=HTTPStatus.OK)
+async def api_participant(
     req: Request, raisenow_id: str, WalletTypeInfo=Depends(get_key_type)
 ):
-    raisenow = await get_raisenow(raisenow_id, req)
-    if not raisenow:
+    participant = await get_participant(participant_id, req)
+    if not participant:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="raisenow does not exist."
+            status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
         )
-    return raisenow.dict()
+    return participant.dict()
 
 
 ## update a record
 
 
-@raisenow_ext.put("/api/v1/participants/{raisenow_id}")
-async def api_raisenow_update(
+@raisenow_ext.put("/api/v1/participants/{participant_id}")
+async def api_participant_update(
     req: Request,
     data: CreateRaiseNowData,
     raisenow_id: str,
     wallet: WalletTypeInfo = Depends(get_key_type),
 ):
-    if not raisenow_id:
+    if not participant_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="raisenow does not exist."
+            status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
         )
-    raisenow = await get_raisenow(raisenow_id, req)
+    participant = await get_participant(participant_id, req)
+    assert participant, "participant couldn't be retrieved"
+
+    raisenow = await get_raisenow(participant.raisenow, req)
     assert raisenow, "raisenow couldn't be retrieved"
 
     if wallet.wallet.id != raisenow.wallet:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN, detail="Not your raisenow."
         )
-    raisenow = await update_raisenow(
-        raisenow_id=raisenow_id, **data.dict(), req=req
+    participant = await update_participant(
+        participant_id=participant_id, **data.dict(), req=req
     )
-    return raisenow.dict()
+    return participant.dict()
 
 
 ## Create a new record
 
-
-@raisenow_ext.post("/api/v1/participants", status_code=HTTPStatus.CREATED)
-async def api_raisenow_create(
+@raisenow_ext.post("/api/v1/participant", status_code=HTTPStatus.CREATED)
+async def api_participant_create(
     req: Request,
     data: CreateRaiseNowData,
     wallet: WalletTypeInfo = Depends(require_admin_key),
 ):
-    raisenow = await create_raisenow(
+    participant = await create_participant(
         wallet_id=wallet.wallet.id, data=data, req=req
     )
-    return raisenow.dict()
+    return participant.dict()
 
 
 ## Delete a record
 
 
-@raisenow_ext.delete("/api/v1/participants/{raisenow_id}")
-async def api_raisenow_delete(
+@raisenow_ext.delete("/api/v1/participant/{participant_id}")
+async def api_participant_delete(
     raisenow_id: str, wallet: WalletTypeInfo = Depends(require_admin_key)
 ):
-    raisenow = await get_raisenow(raisenow_id)
+    participant = await get_participant(participant_id)
 
-    if not raisenow:
+    if not participant:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="raisenow does not exist."
+            status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
         )
+    raisenow = await get_raisenow(participant.raisenow, req)
+    assert raisenow, "raisenow couldn't be retrieved"
 
     if raisenow.wallet != wallet.wallet.id:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN, detail="Not your raisenow."
         )
 
-    await delete_raisenow(raisenow_id)
+    await delete_participant(participant_id)
     return "", HTTPStatus.NO_CONTENT

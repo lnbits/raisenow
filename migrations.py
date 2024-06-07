@@ -33,6 +33,7 @@ async def m002_initial(db):
             raise TEXT NOT NULL,
             name TEXT NOT NULL,
             description TEXT,
+            profile_image TEXT,
             total INTEGER DEFAULT 0,
             lnurlpay TEXT
         );
