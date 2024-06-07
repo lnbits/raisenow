@@ -30,7 +30,7 @@ async def m002_initial(db):
         """
         CREATE TABLE raisenow.participants (
             id TEXT PRIMARY KEY,
-            raise TEXT NOT NULL,
+            raisenow TEXT NOT NULL,
             name TEXT NOT NULL,
             description TEXT,
             profile_image TEXT,

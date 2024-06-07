@@ -41,7 +41,7 @@
                   color="accent"
                   round
                   dense
-                  @click="props.expand = !props.expand"
+                  @click="handleClick(props.key, props)"
                   :icon="props.expand ? 'expand_less' : 'expand_more'"
                 ><q-tooltip>Participants</q-tooltip></q-btn>
               </q-td>
@@ -84,14 +84,6 @@
                                 @click="openParticipantDialog(props.row.id)"
                                 class="float-left q-my-sm"
                                 >Add Participant</q-btn
-                              >
-                              <q-btn
-                                color="grey"
-                                outline
-                                unelevated
-                                @click="deleteAllParticipants(props.row.id)"
-                                class="float-left q-my-sm q-ml-sm"
-                                >Delete All</q-btn
                               >
                             </div>
                           </div>
@@ -215,10 +207,8 @@
           placeholder="Name for your raise"></q-input>
           <q-input filled dense v-model.trim="RaiseFormDialog.data.description" label="Description (optional)"
           placeholder="optional description for your raise "></q-input>
-          <q-select filled dense emit-value v-model="RaiseFormDialog.data.raise" :options="ranow"
-          label="Raise *"></q-select>
           <q-input filled dense v-model.trim="RaiseFormDialog.data.profile_image" label="Profile image for the participant (optional)"
-          placeholder="Optional profile image"></q-input>
+          placeholder="Optional profile image URL 400/400px"></q-input>
         <div class="row q-mt-lg">
           <q-btn v-if="RaiseFormDialog.data.id" unelevated color="primary" type="submit" color="primary">Update raisenow</q-btn>
           <q-btn v-else unelevated color="primary"
@@ -377,11 +367,18 @@
         console.log(this.RaiseFormDialog.data.live_dates)
         const data = {
           name: this.RaiseFormDialog.data.name,
-          description: this.RaiseFormDialog.data.description,
-          background_image: this.RaiseFormDialog.data.background_image,
-          header_image: this.RaiseFormDialog.data.header_image,
-          live_dates: String(this.RaiseFormDialog.data.live_dates.from + ',' + this.RaiseFormDialog.data.live_dates.to)
+          description: this.RaiseFormDialog.data.description
         }
+        if(this.RaiseFormDialog.data.live_dates){
+          data.live_dates = String(this.RaiseFormDialog.data.live_dates.from + ',' + this.RaiseFormDialog.data.live_dates.to)
+          }
+        if(this.RaiseFormDialog.data.background_image){
+          data.background_image = this.RaiseFormDialog.data.background_image
+        }
+        if(this.RaiseFormDialog.data.header_image){
+          data.header_image = this.RaiseFormDialog.data.header_image
+        }
+
         const wallet = _.findWhere(this.g.user.wallets, {
           id: this.RaiseFormDialog.data.wallet
         })
@@ -493,7 +490,7 @@
         LNbits.api
           .request(
             'GET',
-            '/participants/api/v1/' + raID,
+            '/raisenow/api/v1/participants/' + raID,
             this.g.user.wallets[0].inkey
           )
           .then(function (response) {
@@ -503,9 +500,9 @@
             })
           })
       },
-      openParticipantDialog: function (id) {
+      openParticipantDialog: function (raId) {
         this.ParticpantsFormDialog.data = {
-          raisenow: id
+          raisenow: raId
         }
         this.ParticpantsFormDialog.show = true
       },
@@ -564,6 +561,11 @@
           return obj.raisenow == partId
         })
       },
+      handleClick(id, props) {
+        console.log(id)
+        this.getparticipants(id)
+        props.expand = !props.expand
+    },
       makeItRain: function () {
         document.getElementById("vue").disabled = true
         var end = Date.now() + (2 * 1000)

@@ -120,10 +120,10 @@ async def create_participant(
 
 
 async def get_participant(
-    raisenow_id: str, req: Optional[Request] = None
+    participant_id: str, req: Optional[Request] = None
 ) -> Optional[Participant]:
     row = await db.fetchone(
-        "SELECT * FROM raisenow.participants WHERE id = ?", (raisenow_id,)
+        "SELECT * FROM raisenow.participants WHERE id = ?", (participant_id,)
     )
     if not row:
         return None
@@ -136,14 +136,11 @@ async def get_participant(
 
 
 async def get_participants(
-    wallet_ids: Union[str, List[str]], req: Optional[Request] = None
+    raisenow_id: str, req: Optional[Request] = None
 ) -> List[Participant]:
-    if isinstance(wallet_ids, str):
-        wallet_ids = [wallet_ids]
 
-    q = ",".join(["?"] * len(wallet_ids))
     rows = await db.fetchall(
-        f"SELECT * FROM raisenow.participants WHERE wallet IN ({q})", (*wallet_ids,)
+        "SELECT * FROM raisenow.participants WHERE raisenow = ?", (raisenow_id,)
     )
     tempRows = [Participant(**row) for row in rows]
     if req:
