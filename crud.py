@@ -101,17 +101,16 @@ async def create_participant(
     participant_id = urlsafe_short_hash()
     await db.execute(
         """
-        INSERT INTO raisenow.participants (id, wallet, name, raisenow, description, profile_image, total)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO raisenow.participants (id, name, raisenow, description, profile_image, total)
+        VALUES (?, ?, ?, ?, ?, ?)
         """,
         (
             participant_id,
-            wallet_id,
             data.name,
             data.raisenow,
             data.description,
             data.profile_image,
-            data.total,
+            0,
         ),
     )
     participant = await get_participant(participant_id, req)
@@ -138,7 +137,7 @@ async def get_participant(
 async def get_participants(
     raisenow_id: str, req: Optional[Request] = None
 ) -> List[Participant]:
-
+    logger.debug(raisenow_id)
     rows = await db.fetchall(
         "SELECT * FROM raisenow.participants WHERE raisenow = ?", (raisenow_id,)
     )
@@ -164,7 +163,7 @@ async def update_participant(
     return raisenow
 
 
-async def delete_participant(raisenow_id: str) -> None:
+async def delete_participant(participant_id: str) -> None:
     await db.execute(
-        "DELETE FROM raisenow.participants WHERE id = ?", (raisenow_id,)
+        "DELETE FROM raisenow.participants WHERE id = ?", (participant_id,)
     )

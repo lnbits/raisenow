@@ -144,7 +144,7 @@ async def api_raisenow_delete(
 
 @raisenow_ext.get("/api/v1/participants/{raisenow_id}", status_code=HTTPStatus.OK)
 async def api_participants(
-    req: Request, raisenow_id: str, WalletTypeInfo=Depends(get_key_type)
+    req: Request, raisenow_id: str
 ):
     participants = await get_participants(raisenow_id, req)
     if not participants:
@@ -176,7 +176,7 @@ async def api_participant(
 @raisenow_ext.put("/api/v1/participants/{participant_id}")
 async def api_participant_update(
     req: Request,
-    data: CreateRaiseNowData,
+    data: CreateParticipantData,
     raisenow_id: str,
     wallet: WalletTypeInfo = Depends(get_key_type),
 ):
@@ -205,7 +205,7 @@ async def api_participant_update(
 @raisenow_ext.post("/api/v1/participant", status_code=HTTPStatus.CREATED)
 async def api_participant_create(
     req: Request,
-    data: CreateRaiseNowData,
+    data: CreateParticipantData,
     wallet: WalletTypeInfo = Depends(require_admin_key),
 ):
     participant = await create_participant(
@@ -219,10 +219,10 @@ async def api_participant_create(
 
 @raisenow_ext.delete("/api/v1/participant/{participant_id}")
 async def api_participant_delete(
-    raisenow_id: str, wallet: WalletTypeInfo = Depends(require_admin_key)
+    req: Request, participant_id: str, wallet: WalletTypeInfo = Depends(require_admin_key)
 ):
     participant = await get_participant(participant_id)
-
+    logger.debug(participant)
     if not participant:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
