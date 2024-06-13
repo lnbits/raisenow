@@ -28,12 +28,9 @@ async def wait_for_paid_invoices():
 
 
 async def on_invoice_paid(payment: Payment) -> None:
-
-    if payment.extra.get("tag") == "raisenow_sent":
-        await websocket_updater(payment.extra.get("raisenow"), str(payment.extra))
-
     if payment.extra.get("tag") != "raisenow":
         return
+
 
     record_id = payment.extra.get("recordId")
 
@@ -54,11 +51,12 @@ async def on_invoice_paid(payment: Payment) -> None:
         participant_record.lnaddress, payment.wallet_id, safe_amount_msat, memo
     )
     extra = {
-        "tag": "raisenow_sent",
-        "participant": record_id,
+        "participant_id": record_id,
+        "participant_name": participant_record.name,
         "participant_total": participant_total,
         "raisenow": raisenow_record.id,
         "raisenow_total": raisenow_total,
+        "amount": safe_amount_msat
     }
     if payment_request:
         await pay_invoice(
@@ -70,6 +68,8 @@ async def on_invoice_paid(payment: Payment) -> None:
     await update_participant(participant_id=record_id, **participant_data_to_update)
     await update_raisenow(raisenow_id=raisenow_record.id, **raisenow_data_to_update)
 
+    await websocket_updater(raisenow_record.id, json.dumps(extra))
+
 
 async def get_lnurl_invoice(
     lnaddress, wallet_id, amount_msat, memo
@@ -79,6 +79,9 @@ async def get_lnurl_invoice(
 
     data = await api_lnurlscan(lnaddress)
     rounded_amount = floor(amount_msat / 1000) * 1000
+
+    commentAllowed = data.get("commentAllowed", 0)
+    memo = memo[0:commentAllowed]
 
     async with httpx.AsyncClient() as client:
         try:

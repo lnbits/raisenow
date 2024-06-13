@@ -1,57 +1,60 @@
 {% extends "public.html" %}
 {% block page %}
-<div :style="'background-image:url('+background_image+'); background-size: cover; min-height: 100vh; padding: 20px;'" class="q-pa-md">
+<div :style="'background-image:url('+background_image+'); background-size: cover; min-height: 100vh; padding: 20px;'"
+  class="q-pa-md">
   <div style="background-color: white; display: flex; align-items: center;">
     <img :src="header_image" alt="Header Image" style="max-width: 100px; height: auto; margin-right: 20px;">
     <h1>Your Header Text Here</h1>
   </div>
   <div class="row q-col-gutter-md justify-center q-mt-md">{% raw %}
-    <div v-for="participant in participants" :key="participant.id" :class="`col-${columnCount} q-ml-${sizes[spaceCount]}`">
-      <q-card class="q-pa-md">
-            <q-item>
-              <q-item-section avatar>
-                <q-avatar size="xl">
-                  <img :src="participant.profile_image || '/raisenow/static/image/raisenow.png'" >
-                </q-avatar>
-              </q-item-section>
+    <div v-for="participant in participants" :key="participant.id"
+      :class="`col-${columnCount} q-ml-${sizes[spaceCount]}`">
+      <q-card class="q-pa-md" :class="participant.received_payment ? 'bg-secondary ': ''">
+        <q-item>
+          <q-item-section avatar>
+            <q-avatar size="xl">
+              <img :src="participant.profile_image || '/raisenow/static/image/raisenow.png'">
+            </q-avatar>
+          </q-item-section>
 
-              <q-item-section>
-                <h5 class="q-ma-none">{{ participant.name }}</h5 class="q-ma-none">
-                <q-item-label caption>{{ participant.description }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            <div class="text-center q-mt-md q-pb-md">
-              <q-responsive :ratio="1">
-                <qrcode :value="participant.lnurlpay" :options="{width: 200}" class="rounded-borders"></qrcode>
-              </q-responsive>
+          <q-item-section>
+            <h5 class="q-ma-none">{{ participant.name }}</h5 class="q-ma-none">
+            <q-item-label caption>{{ participant.description }}</q-item-label>
+          </q-item-section>
+        </q-item>
+        <div class="text-center q-mt-md q-pb-md">
+          <q-responsive :ratio="1">
+            <qrcode :value="participant.lnurlpay" :options="{width: 200}" class="rounded-borders"></qrcode>
+          </q-responsive>
+        </div>
+
+        <div class="row">
+          <div class="col-3">
+            <q-btn flat @click="copyText(participant.lnurlpay)" class="q-ma-none q-pa-none" color="primary"
+              icon="content_copy" />
+          </div>
+          <div class="col-9">
+            <div class="float-right q-mr-md">
+              <span>{{ participant.total || '0' }}</span>
+              <span>sats</span>
             </div>
-
-            <div class="row">
-              <div class="col-3">
-                <q-btn flat  @click="copyText(participant.lnurlpay)" class="q-ma-none q-pa-none"  color="primary" icon="content_copy" />
-              </div>
-              <div class="col-9">
-                <div class="float-right q-mr-md">
-                <span>{{ participant.total || '0' }}</span>
-                <span>sats</span>
-              </div>
-              </div>
+          </div>
 
 
 
-            </div>
+        </div>
 
       </q-card>
     </div>
     <q-page-sticky position="bottom-right" :offset="[18, 18]">
-      <q-btn @click="resizeColumns(true)" fab  icon="add" color="secondary" />
+      <q-btn @click="resizeColumns(true)" fab icon="add" color="secondary" />
     </q-page-sticky>
     <q-page-sticky position="bottom-right" :offset="[80, 18]">
       <q-btn @click="resizeColumns(false)" fab icon="remove" color="secondary" />
     </q-page-sticky>
 
     <q-page-sticky position="bottom-left" :offset="[18, 18]">
-      <q-btn @click="resizeSpace(true)" fab  icon="chevron_left" color="secondary" />
+      <q-btn @click="resizeSpace(true)" fab icon="chevron_left" color="secondary" />
     </q-page-sticky>
     <q-page-sticky position="bottom-left" :offset="[80, 18]">
       <q-btn @click="resizeSpace(false)" fab icon="chevron_right" color="secondary" />
@@ -65,51 +68,118 @@
   Vue.component(VueQrcode.name, VueQrcode)
 
   new Vue({
-  el: '#vue',
-  mixins: [windowMixin],
-  data: function () {
-    return {
-      raise_lnurlpay: '{{ lnurlpay }}',
-      raisenow_id: '{{ raisenow_id }}',
-      header_image: '{{ header_image }}',
-      background_image: '{{ background_image }}',
-      participants: '{{ participants | safe }}',
-      columnCount: 3,
-      spaceCount: 3,
-      sizes: ['none', 'xs', 'sm', 'md', 'lg', 'xl']
-    }
-  },
-  created: function () {
-   this.participants = JSON.parse(this.participants)
-    // Will trigger payment reaction when payment received, sent from tasks.py
-    eventReactionWebocket(this.raisenow_id)
-  },
-  methods: {
-    copyText(text) {
-      navigator.clipboard.writeText(text).then(() => {
-        this.$q.notify({
-          message: 'Copied to clipboard',
-          color: 'green',
-          timeout: 1000
-        })
-      })
-    },
-    resizeColumns(increase=false){
-      if (increase){
-        this.columnCount = Math.min(12, this.columnCount + 1)
-      } else {
-        this.columnCount = Math.max(1, this.columnCount - 1)
+    el: '#vue',
+    mixins: [windowMixin],
+    data: function () {
+      return {
+        raise_lnurlpay: '{{ lnurlpay }}',
+        raisenow_id: '{{ raisenow_id }}',
+        header_image: '{{ header_image }}',
+        background_image: '{{ background_image }}',
+        participants: '{{ participants | safe }}',
+        columnCount: 3,
+        spaceCount: 3,
+        sizes: ['none', 'xs', 'sm', 'md', 'lg', 'xl']
       }
     },
-    resizeSpace(increase=false){
+    created: function () {
+      this.participants = JSON.parse(this.participants)
+      // Will trigger payment reaction when payment received, sent from tasks.py
 
-      if (increase){
-        this.spaceCount = Math.min(this.sizes.length - 1, this.spaceCount + 1)
-      } else {
-        this.spaceCount = Math.max(0, this.spaceCount - 1)
+      this.startWebsocketLister()
+      this.columnCount = +(this.$q.localStorage.getItem(`lnbits.extensions.raisenow.${this.raisenow_id}.columnCount`) || '3')
+      this.spaceCount = +(this.$q.localStorage.getItem(`lnbits.extensions.raisenow.${this.raisenow_id}.spaceCount`) || '3')
+
+      console.log("### creted", this.columnCount, this.spaceCount)
+      setTimeout(() => {
+
+        this.handleNewPayment({
+          participant_id: 'dJQrdGnrYBwBixFFypgJJg',
+          name: "SOMEEEE",
+          amount: 111
+        })
+      }, 5000)
+
+    },
+    methods: {
+      copyText(text) {
+        navigator.clipboard.writeText(text).then(() => {
+          this.$q.notify({
+            message: 'Copied to clipboard',
+            color: 'green',
+            timeout: 1000
+          })
+        })
+      },
+      resizeColumns(increase = false) {
+        if (increase) {
+          this.columnCount = Math.min(12, this.columnCount + 1)
+        } else {
+          this.columnCount = Math.max(1, this.columnCount - 1)
+        }
+        this.$q.localStorage.set(
+          `lnbits.extensions.raisenow.${this.raisenow_id}.columnCount`,
+          this.columnCount
+        )
+      },
+      resizeSpace(increase = false) {
+        if (increase) {
+          this.spaceCount = Math.min(this.sizes.length - 1, this.spaceCount + 1)
+        } else {
+          this.spaceCount = Math.max(0, this.spaceCount - 1)
+        }
+        this.$q.localStorage.set(
+          `lnbits.extensions.raisenow.${this.raisenow_id}.spaceCount`,
+          this.spaceCount
+        )
+      },
+      startWebsocketLister() {
+        const url = new URL(window.location)
+        url.protocol = url.protocol === 'https:' ? 'wss' : 'ws'
+        url.pathname = `/api/v1/ws/${this.raisenow_id}`
+        const ws = new WebSocket(url)
+        ws.addEventListener('message', async ({ data }) => {
+          const extra = JSON.parse(data)
+          this.handleNewPayment(extra)
+        })
+      },
+      handleNewPayment(extra) {
+        try {
+          console.log("### xxx")
+          const index = this.participants.findIndex(p => p.id === extra.participant_id)
+          if (index === -1) {
+            return
+          }
+          this.$q.notify({
+            type: 'positive',
+            message: `${extra.name} received ${extra.amount} sats.`,
+            timeout: 2000,
+          })
+          this.notifyNewPayment(index)
+          setTimeout(() => {
+            window.location.reload()
+          }, 2000)
+        } catch (error) {
+          console.warn(error)
+        }
+      },
+      notifyNewPayment(index) {
+        try {
+
+          const p = this.participants;
+
+          setTimeout(() => {
+            this.participants = p
+            this.participants[index].received_payment = true
+          })
+          this.participants = []
+          const reaction = localStorage.getItem('lnbits.reactions') || 'confettiStars'
+          window[reaction.split('|')[1]]()
+        } catch (error) {
+          console.warn(error)
+        }
       }
     }
-  }
-})
+  })
 </script>
 {% endblock %}

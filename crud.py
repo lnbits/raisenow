@@ -139,7 +139,10 @@ async def get_participants(
 ) -> List[Participant]:
     logger.debug(raisenow_id)
     rows = await db.fetchall(
-        "SELECT * FROM raisenow.participants WHERE raisenow = ?", (raisenow_id,)
+        """
+            SELECT * FROM raisenow.participants WHERE raisenow = ?
+            ORDER BY total DESC, name ASC
+        """, (raisenow_id,)
     )
     tempRows = [Participant(**row) for row in rows]
     if req:

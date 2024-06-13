@@ -206,7 +206,7 @@
           <q-input filled dense v-model.trim="ParticpantsFormDialog.data.profile_image" label="Profile image for the participant (optional)"
           placeholder="Optional profile image URL 400/400px"></q-input>
           <q-input filled dense emit-value v-model.trim="ParticpantsFormDialog.data.lnaddress"
-          label="LN Address where money goes *"></q-input>
+          label="LN Address where money goes *" hint="Avoid using fixed amount. Set a lower min amount, fees might apply."></q-input>
         <div class="row q-mt-lg">
           <q-btn v-if="ParticpantsFormDialog.data.id" unelevated color="primary" type="submit" color="primary">Update particpiant</q-btn>
           <q-btn v-else unelevated color="primary"
