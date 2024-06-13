@@ -1,10 +1,10 @@
 {% extends "public.html" %}
 {% block page %}
-<div :style="'background-image:url('+background_image+'); background-size: cover; min-height: 100vh; padding: 20px;'"
-  class="q-pa-md">
-  <div style="background-color: white; display: flex; align-items: center;">
-    <img :src="header_image" alt="Header Image" style="max-width: 100px; height: auto; margin-right: 20px;">
-    <h1>Your Header Text Here</h1>
+<div :style="'background-image:url('+background_image+'); background-size: cover; min-height: 100vh'" class="q-pa-none">
+
+  <div style="background-color: white; display: flex;  max-height: 100px;" class="flex-center q-ma-sm">
+    <img :src="header_image" alt="Header Image" style="max-height: 100px; margin-right: 20px;">
+
   </div>
   <div class="row q-col-gutter-md justify-center q-mt-md">{% raw %}
     <div v-for="participant in participants" :key="participant.id"
@@ -35,7 +35,7 @@
 
           <div class="col-12">
             <div class="float-right q-mr-md">
-              <span>{{ participant.total || '0' }}</span>
+              <span>{{ participant.total / 1000 || '0' }}</span>
               <span>sats</span>
             </div>
           </div>
@@ -145,14 +145,13 @@
       },
       handleNewPayment(extra) {
         try {
-          console.log("### xxx")
           const index = this.participants.findIndex(p => p.id === extra.participant_id)
           if (index === -1) {
             return
           }
           this.$q.notify({
             type: 'positive',
-            message: `${extra.name} received ${extra.amount} sats.`,
+            message: `${extra.participant_name} received ${extra.amount} sats.`,
             timeout: 2000,
           })
           this.notifyNewPayment(index)
@@ -173,8 +172,9 @@
             this.participants[index].received_payment = true
           })
           this.participants = []
-          const reaction = localStorage.getItem('lnbits.reactions') || 'confettiStars'
-          window[reaction.split('|')[1]]()
+          const reaction = localStorage.getItem('lnbits.reactions')
+          const reactionFn = reaction ? reaction.split('|')[1] : 'confettiStars'
+          window[reactionFn]()
         } catch (error) {
           console.warn(error)
         }
