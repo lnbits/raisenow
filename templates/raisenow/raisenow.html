@@ -46,7 +46,7 @@
       raisenow_id: '{{ raisenow_id }}',
       header_image: '{{ header_image }}',
       background_image: '{{ background_image }}',
-      participants: '{{ participants }}'
+      participants: '{{ participants | safe }}'
     }
   },
   created: function () {
