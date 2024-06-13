@@ -6,8 +6,7 @@ from . import db
 from .models import CreateRaiseNowData, RaiseNow, CreateParticipantData, Participant
 from loguru import logger
 from fastapi import Request
-from lnurl import encode as lnurl_encode
-import shortuuid
+# from lnurl import encode as lnurl_encode
 
 #######################################
 ############### RAISES ################
