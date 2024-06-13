@@ -9,19 +9,22 @@
   <div class="row q-col-gutter-md justify-center q-mt-md">{% raw %}
     <div v-for="participant in participants" :key="participant.id"
       :class="`col-${columnCount} q-ml-${sizes[spaceCount]}`">
-      <q-card class="q-pa-md" :class="participant.received_payment ? 'bg-secondary ': ''">
-        <q-item>
-          <q-item-section avatar>
-            <q-avatar size="xl">
+      <q-card @click="copyText(participant.lnurlpay)" class="q-pa-md cursor-pointer"
+        :class="participant.received_payment ? 'bg-secondary ': ''">
+
+        <div class="row">
+          <div :class="`col-${13 - columnCount}`">
+            <q-avatar>
               <img :src="participant.profile_image || '/raisenow/static/image/raisenow.png'">
             </q-avatar>
-          </q-item-section>
-
-          <q-item-section>
-            <h5 class="q-ma-none">{{ participant.name }}</h5 class="q-ma-none">
-            <q-item-label caption>{{ participant.description }}</q-item-label>
-          </q-item-section>
-        </q-item>
+          </div>
+          <div :class="`col-${13-columnCount}`">
+            <q-item-section>
+              <h5 class="q-ma-none">{{ participant.name }}</h5 class="q-ma-none">
+              <q-item-label>{{ participant.description }}</q-item-label>
+            </q-item-section>
+          </div>
+        </div>
         <div class="text-center q-mt-md q-pb-md">
           <q-responsive :ratio="1">
             <qrcode :value="participant.lnurlpay" :options="{width: 200}" class="rounded-borders"></qrcode>
@@ -29,11 +32,8 @@
         </div>
 
         <div class="row">
-          <div class="col-3">
-            <q-btn flat @click="copyText(participant.lnurlpay)" class="q-ma-none q-pa-none" color="primary"
-              icon="content_copy" />
-          </div>
-          <div class="col-9">
+
+          <div class="col-12">
             <div class="float-right q-mr-md">
               <span>{{ participant.total || '0' }}</span>
               <span>sats</span>
@@ -90,22 +90,22 @@
       this.columnCount = +(this.$q.localStorage.getItem(`lnbits.extensions.raisenow.${this.raisenow_id}.columnCount`) || '3')
       this.spaceCount = +(this.$q.localStorage.getItem(`lnbits.extensions.raisenow.${this.raisenow_id}.spaceCount`) || '3')
 
-      console.log("### creted", this.columnCount, this.spaceCount)
-      setTimeout(() => {
+      // console.log("### creted", this.columnCount, this.spaceCount)
+      // setTimeout(() => {
 
-        this.handleNewPayment({
-          participant_id: 'dJQrdGnrYBwBixFFypgJJg',
-          name: "SOMEEEE",
-          amount: 111
-        })
-      }, 5000)
+      //   this.handleNewPayment({
+      //     participant_id: 'dJQrdGnrYBwBixFFypgJJg',
+      //     name: "SOMEEEE",
+      //     amount: 111
+      //   })
+      // }, 5000)
 
     },
     methods: {
       copyText(text) {
         navigator.clipboard.writeText(text).then(() => {
           this.$q.notify({
-            message: 'Copied to clipboard',
+            message: 'Linl copied to clipboard',
             color: 'green',
             timeout: 1000
           })
