@@ -26,10 +26,12 @@
           :pagination.sync="ranowTable.pagination">
           <template v-slot:header="props">
             <q-tr :props="props">
-
+              <q-th auto-width>
+              </q-th>
               <q-th v-for="col in props.cols" :key="col.name" :props="props">
                 ${ col.label }
               </q-th>
+
             </q-tr>
           </template>
 
@@ -67,8 +69,7 @@
                   <q-tooltip> Delete raise </q-tooltip>
                 </q-btn>
               </q-td>
-              <q-td auto-width>
-              </q-td>
+
 
             </q-tr>
             <q-tr v-show="props.expand" :props="props">
