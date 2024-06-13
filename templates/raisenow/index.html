@@ -51,8 +51,7 @@
                 <div v-else>${ col.value }</div>
               </q-td>
                 <q-td auto-width>
-                  <q-btn unelevated dense size="sm" icon="qr_code" :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
-                    class="q-mr-sm" @click="openUrlDialog(props.row.id)"></q-btn></q-td>
+               </q-td>
               <q-td auto-width>
                 <q-btn unelevated dense size="sm" icon="launch" :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
                   type="a" :href="props.row.raisenow" target="_blank"><q-tooltip>Open public
@@ -281,7 +280,7 @@
               label: 'Wallet',
               field: 'wallet'
             },
-            { name: 'total', align: 'left', label: 'Total sent/received', field: 'total' },
+            { name: 'total', align: 'left', label: 'Total', field: 'total' },
           ],
           pagination: {
             rowsPerPage: 10
