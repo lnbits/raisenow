@@ -6,8 +6,8 @@
     <h1>Your Header Text Here</h1>
   </div>
   <div class="row q-col-gutter-md justify-center q-mt-md">{% raw %}
-    <div v-for="participant in participants" :key="participant.id" class="col-12 col-sm-6 col-md-4 col-lg-3 q-gutter-y-md">
-      <q-card>
+    <div v-for="participant in participants" :key="participant.id" :class="`col-${columnCount} q-ml-${sizes[spaceCount]}`">
+      <q-card class="q-pa-md">
             <q-item>
               <q-item-section avatar>
                 <q-avatar size="xl">
@@ -21,14 +21,14 @@
               </q-item-section>
             </q-item>
             <div class="text-center q-mt-md q-pb-md">
-              <q-responsive :ratio="1" class="q-mx-md">
+              <q-responsive :ratio="1">
                 <qrcode :value="participant.lnurlpay" :options="{width: 200}" class="rounded-borders"></qrcode>
               </q-responsive>
             </div>
 
             <div class="row">
               <div class="col-3">
-                <q-btn flat  @click="copyText(participant.lnurlpay)" class="q-ml-md"  color="primary" icon="content_copy" />
+                <q-btn flat  @click="copyText(participant.lnurlpay)" class="q-ma-none q-pa-none"  color="primary" icon="content_copy" />
               </div>
               <div class="col-9">
                 <div class="float-right q-mr-md">
@@ -43,6 +43,19 @@
 
       </q-card>
     </div>
+    <q-page-sticky position="bottom-right" :offset="[18, 18]">
+      <q-btn @click="resizeColumns(true)" fab  icon="add" color="secondary" />
+    </q-page-sticky>
+    <q-page-sticky position="bottom-right" :offset="[80, 18]">
+      <q-btn @click="resizeColumns(false)" fab icon="remove" color="secondary" />
+    </q-page-sticky>
+
+    <q-page-sticky position="bottom-left" :offset="[18, 18]">
+      <q-btn @click="resizeSpace(true)" fab  icon="chevron_left" color="secondary" />
+    </q-page-sticky>
+    <q-page-sticky position="bottom-left" :offset="[80, 18]">
+      <q-btn @click="resizeSpace(false)" fab icon="chevron_right" color="secondary" />
+    </q-page-sticky>
     {% endraw %}
   </div>
 </div>
@@ -60,14 +73,16 @@
       raisenow_id: '{{ raisenow_id }}',
       header_image: '{{ header_image }}',
       background_image: '{{ background_image }}',
-      participants: '{{ participants | safe }}'
+      participants: '{{ participants | safe }}',
+      columnCount: 3,
+      spaceCount: 3,
+      sizes: ['none', 'xs', 'sm', 'md', 'lg', 'xl']
     }
   },
   created: function () {
    this.participants = JSON.parse(this.participants)
     // Will trigger payment reaction when payment received, sent from tasks.py
     eventReactionWebocket(this.raisenow_id)
-    console.log(this.participants)
   },
   methods: {
     copyText(text) {
@@ -78,6 +93,21 @@
           timeout: 1000
         })
       })
+    },
+    resizeColumns(increase=false){
+      if (increase){
+        this.columnCount = Math.min(12, this.columnCount + 1)
+      } else {
+        this.columnCount = Math.max(1, this.columnCount - 1)
+      }
+    },
+    resizeSpace(increase=false){
+
+      if (increase){
+        this.spaceCount = Math.min(this.sizes.length - 1, this.spaceCount + 1)
+      } else {
+        this.spaceCount = Math.max(0, this.spaceCount - 1)
+      }
     }
   }
 })
