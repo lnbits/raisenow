@@ -16,7 +16,7 @@
       <q-card-section>
         <div class="row items-center no-wrap q-mb-md">
           <div class="col">
-            <h5 class="text-subtitle1 q-my-none">raisenow</h5>
+            <h5 class="text-subtitle1 q-my-none">Raise Now</h5>
           </div>
           <div class="col-auto">
             <q-btn flat color="grey" @click="exportCSV">Export to CSV</q-btn>
@@ -26,7 +26,7 @@
           :pagination.sync="ranowTable.pagination">
           <template v-slot:header="props">
             <q-tr :props="props">
-              <q-th auto-width></q-th>
+
               <q-th v-for="col in props.cols" :key="col.name" :props="props">
                 ${ col.label }
               </q-th>
@@ -50,8 +50,7 @@
                 <div v-if="col.field == 'total'">${ col.value / 1000} sats</div>
                 <div v-else>${ col.value }</div>
               </q-td>
-                <q-td auto-width>
-               </q-td>
+
               <q-td auto-width>
                 <q-btn unelevated dense size="sm" icon="launch" :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
                   type="a" :href="props.row.raisenow" target="_blank"><q-tooltip>Open public
@@ -67,6 +66,8 @@
                 <q-btn flat dense size="xs" @click="deleteraisenow(props.row.id)" icon="cancel" color="pink">
                   <q-tooltip> Delete raise </q-tooltip>
                 </q-btn>
+              </q-td>
+              <q-td auto-width>
               </q-td>
 
             </q-tr>
@@ -103,7 +104,8 @@
 
 
                                     <q-td v-for="col in propss.cols" :key="col.name" :props="propss">
-                                      <div>${ col.value }</div>
+                                      <div v-if="col.field == 'total'">${ col.value / 1000} sats</div>
+                                      <div v-else>${ col.value }</div>
                                     </q-td>
                                     <q-td auto-width>
                                       <q-btn unelevated dense size="sm" icon="qr_code" :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
