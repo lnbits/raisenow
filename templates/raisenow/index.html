@@ -50,9 +50,9 @@
                 <div v-if="col.field == 'total'">${ col.value / 1000} sats</div>
                 <div v-else>${ col.value }</div>
               </q-td>
-              <q-td auto-width>
-                <q-btn unelevated dense size="sm" icon="qr_code" :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
-                  class="q-mr-sm" @click="openUrlDialog(props.row.id)"></q-btn></q-td>
+                <q-td auto-width>
+                  <q-btn unelevated dense size="sm" icon="qr_code" :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
+                    class="q-mr-sm" @click="openUrlDialog(props.row.id)"></q-btn></q-td>
               <q-td auto-width>
                 <q-btn unelevated dense size="sm" icon="launch" :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
                   type="a" :href="props.row.raisenow" target="_blank"><q-tooltip>Open public
@@ -98,21 +98,23 @@
                                 :columns="particpantsTable.columns"
                                 :pagination.sync="particpantsTable.pagination"
                               >
-                                <template v-slot:body="props">
+                                <template v-slot:body="propss">
                                   
-                                  <q-tr :props="props">
+                                  <q-tr :props="propss">
 
 
-                                    <q-td v-for="col in props.cols" :key="col.name" :props="props">
+                                    <q-td v-for="col in propss.cols" :key="col.name" :props="propss">
                                       <div>${ col.value }</div>
                                     </q-td>
-
+                                    <q-td auto-width>
+                                      <q-btn unelevated dense size="sm" icon="qr_code" :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
+                                        class="q-mr-sm" @click="openUrlDialog(propss.row.id)"></q-btn></q-td>
                                     <q-td auto-width>
                                       <q-btn
                                         size="sm"
                                         color="accent"
                                         dense
-                                        @click="updateParticipantForm(props.row.id)"
+                                        @click="updateParticipantForm(propss.row.id, props.row)"
                                         icon="edit"
                                       ></q-btn>
                                     </q-td>
@@ -121,7 +123,7 @@
                                         size="sm"
                                         color="pink"
                                         dense
-                                        @click="deleteParticipant(props.row.id)"
+                                        @click="deleteParticipant(propss.row.id)"
                                         icon="delete"
                                       ></q-btn>
                                     </q-td>
@@ -201,8 +203,8 @@
           placeholder="optional description for your raise "></q-input>
           <q-input filled dense v-model.trim="ParticpantsFormDialog.data.profile_image" label="Profile image for the participant (optional)"
           placeholder="Optional profile image URL 400/400px"></q-input>
-          <q-select filled dense emit-value v-model.trim="ParticpantsFormDialog.data.lnaddress"
-          label="Where money goes *"></q-select>
+          <q-input filled dense emit-value v-model.trim="ParticpantsFormDialog.data.lnaddress"
+          label="Where money goes *"></q-input>
         <div class="row q-mt-lg">
           <q-btn v-if="ParticpantsFormDialog.data.id" unelevated color="primary" type="submit" color="primary">Update particpiant</q-btn>
           <q-btn v-else unelevated color="primary"
@@ -457,6 +459,7 @@
       },
       openUrlDialog(id) {
         this.urlDialog.data = _.findWhere(this.ranow, { id })
+        this.urlDialog.data = _.findWhere(this.participants, { id })
         this.qrValue = this.urlDialog.data.lnurlpay
         console.log(this.urlDialog.data.id)
         this.connectWebocket(this.urlDialog.data.id)
@@ -485,6 +488,16 @@
         }
         this.ParticpantsFormDialog.show = true
       },
+      updateParticipantForm(tempId, raisenow) {
+        const participant = _.findWhere(this.participants, { id: tempId })
+        this.ParticpantsFormDialog.data = {
+          ...participant,
+          raisenow: raisenow.id,
+          wallet: raisenow.wallet
+        }
+        console.log(this.ParticpantsFormDialog.data)
+        this.ParticpantsFormDialog.show = true
+      },
       closeParticpantsFormDialog: function () {
         this.ParticpantsFormDialog.show = false
         this.ParticpantsFormDialog.data = {}
@@ -505,17 +518,11 @@
           id: this.ParticpantsFormDialog.data.wallet
         })
         if (this.ParticpantsFormDialog.data.id) {
+          data.id = this.ParticpantsFormDialog.data.id
           this.updateParticipant(wallet, data)
         } else {
           this.createParticipant(wallet, data)
         }
-      },
-      updateParticipantForm(tempId) {
-        const participant = _.findWhere(this.participants, { id: tempId })
-        this.ParticpantsFormDialog.data = {
-          ...participant
-        }
-        this.ParticpantsFormDialog.show = true
       },
       createParticipant(wallet, data) {
         LNbits.api
@@ -537,11 +544,11 @@
             data
           )
           .then(response => {
-            this.ranow = _.reject(this.ranow, obj => {
+            this.participants = _.reject(this.participants, obj => {
               return obj.id == data.id
             })
-            this.ranow.push(mapraisenow(response.data))
-            this.closeRaiseFormDialog()
+            this.participants.push(mapparticipants(response.data))
+            this.closeParticpantsFormDialog()
           })
           .catch(error => {
             LNbits.utils.notifyApiError(error)

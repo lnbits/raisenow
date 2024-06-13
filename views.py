@@ -10,7 +10,10 @@ from lnbits.decorators import check_user_exists
 from lnbits.settings import settings
 
 from . import raisenow_ext, raisenow_renderer
-from .crud import get_raisenow
+from .crud import get_raisenow, get_participants
+from loguru import logger
+import json
+from fastapi.responses import JSONResponse
 
 ranow = Jinja2Templates(directory="ranow")
 
@@ -40,11 +43,21 @@ async def raisenow(request: Request, raisenow_id):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="raisenow does not exist."
         )
+    participants = await get_participants(raisenow_id)
+    if not participants:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="No participants found."
+        )
+    logger.debug("$$$$", participants)
+    logger.debug(json.dumps([dict(p) for p in participants]))
     return raisenow_renderer().TemplateResponse(
         "raisenow/raisenow.html",
         {
             "request": request,
             "raisenow_id": raisenow_id,
+            "header_image": raisenow.header_image,
+            "background_image": raisenow.background_image,
+            "participants": json.dumps([dict(p) for p in participants]),
             "lnurlpay": raisenow.lnurlpay,
             "web_manifest": f"/raisenow/manifest/{raisenow_id}.webmanifest",
         },

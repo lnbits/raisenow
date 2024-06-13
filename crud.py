@@ -47,7 +47,7 @@ async def get_raisenow(
     rowAmended = RaiseNow(**row)
     if req:
         rowAmended.lnurlpay = lnurl_encode(
-            req.url_for("raisenow.api_lnurl_pay", raisenow_id=row.id)._url
+            req.url_for("raisenow.api_lnurl_pay", record_id=row.id)._url
         )
     return rowAmended
 
@@ -66,7 +66,7 @@ async def get_raisenows(
     if req:
         for row in tempRows:
             row.lnurlpay = lnurl_encode(
-                req.url_for("raisenow.api_lnurl_pay", raisenow_id=row.id)._url
+                req.url_for("raisenow.api_lnurl_pay", record_id=row.id)._url
             )
     return tempRows
 
@@ -130,7 +130,7 @@ async def get_participant(
     rowAmended = Participant(**row)
     if req:
         rowAmended.lnurlpay = lnurl_encode(
-            req.url_for("raisenow.api_lnurl_pay", raisenow_id=row.id)._url
+            req.url_for("raisenow.api_lnurl_pay", record_id=row.id)._url
         )
     return rowAmended
 
@@ -146,22 +146,23 @@ async def get_participants(
     if req:
         for row in tempRows:
             row.lnurlpay = lnurl_encode(
-                req.url_for("raisenow.api_lnurl_pay", raisenow_id=row.id)._url
+                req.url_for("raisenow.api_lnurl_pay", record_id=row.id)._url
             )
     return tempRows
 
 
 async def update_participant(
-    raisenow_id: str, req: Optional[Request] = None, **kwargs
+    participant_id: str, req: Optional[Request] = None, **kwargs
 ) -> Participant:
+    logger.debug(participant_id)
     q = ", ".join([f"{field[0]} = ?" for field in kwargs.items()])
     await db.execute(
         f"UPDATE raisenow.participants SET {q} WHERE id = ?",
-        (*kwargs.values(), raisenow_id),
+        (*kwargs.values(), participant_id),
     )
-    raisenow = await get_raisenow(raisenow_id, req)
-    assert raisenow, "Newly updated raisenow couldn't be retrieved"
-    return raisenow
+    participant = await get_participant(participant_id, req)
+    assert participant, "Newly updated participant couldn't be retrieved"
+    return participant
 
 
 async def delete_participant(participant_id: str) -> None:

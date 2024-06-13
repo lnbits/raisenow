@@ -173,11 +173,11 @@ async def api_participant(
 ## update a record
 
 
-@raisenow_ext.put("/api/v1/participants/{participant_id}")
+@raisenow_ext.put("/api/v1/participant/{participant_id}")
 async def api_participant_update(
     req: Request,
     data: CreateParticipantData,
-    raisenow_id: str,
+    participant_id: str,
     wallet: WalletTypeInfo = Depends(get_key_type),
 ):
     if not participant_id:
@@ -194,6 +194,7 @@ async def api_participant_update(
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN, detail="Not your raisenow."
         )
+    logger.debug(data.dict())
     participant = await update_participant(
         participant_id=participant_id, **data.dict(), req=req
     )
