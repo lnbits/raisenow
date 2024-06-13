@@ -7,29 +7,43 @@
   </div>
   <div class="row q-col-gutter-md justify-center q-mt-md">{% raw %}
     <div v-for="participant in participants" :key="participant.id" class="col-12 col-sm-6 col-md-4 col-lg-3 q-gutter-y-md">
-      <q-card style="width: 80%; margin: 0 auto;">
-        <q-card-section>
-          <div class="text-center">
-            <img :src="participant.profile_image" alt="Participant Image" class="q-mx-auto q-my-md" style="display: block; max-width: 100%; height: auto;">
-            <h6 class="text-subtitle1 q-mb-sm q-mt-none">{{ participant.name }}</h6>
-            <p class="q-my-none">{{ participant.description }}</p>
-          </div>
-        </q-card-section>
-        <q-card-section class="q-pa-none">
-          <div class="text-center q-mt-md">
-            <q-responsive :ratio="1" class="q-mx-md">
-              <qrcode :value="participant.lnurlpay" :options="{width: 200}" class="rounded-borders"></qrcode>
-            </q-responsive>
-          </div>
-          <div class="text-center q-mt-md">
-            <q-btn outline color="grey" @click="copyText(participant.lnurlpay)">Copy LNURL</q-btn>
-          </div>
-          <div class="text-center q-mt-md">
-            <h6>Total: {{ participant.total }}</h6>
-          </div>{% endraw %}
-        </q-card-section>
+      <q-card>
+            <q-item>
+              <q-item-section avatar>
+                <q-avatar size="xl">
+                  <img :src="participant.profile_image || '/raisenow/static/image/raisenow.png'" >
+                </q-avatar>
+              </q-item-section>
+
+              <q-item-section>
+                <h5 class="q-ma-none">{{ participant.name }}</h5 class="q-ma-none">
+                <q-item-label caption>{{ participant.description }}</q-item-label>
+              </q-item-section>
+            </q-item>
+            <div class="text-center q-mt-md q-pb-md">
+              <q-responsive :ratio="1" class="q-mx-md">
+                <qrcode :value="participant.lnurlpay" :options="{width: 200}" class="rounded-borders"></qrcode>
+              </q-responsive>
+            </div>
+
+            <div class="row">
+              <div class="col-3">
+                <q-btn flat  @click="copyText(participant.lnurlpay)" class="q-ml-md"  color="primary" icon="content_copy" />
+              </div>
+              <div class="col-9">
+                <div class="float-right q-mr-md">
+                <span>{{ participant.total || '0' }}</span>
+                <span>sats</span>
+              </div>
+              </div>
+
+
+
+            </div>
+
       </q-card>
     </div>
+    {% endraw %}
   </div>
 </div>
 {% endblock %}
