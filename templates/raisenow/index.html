@@ -87,7 +87,7 @@
                               >
                             </div>
                           </div>
-                          
+
                           <div class="row items-center no-wrap q-mb-md">
                             <div class="col-12">
                               <q-table
@@ -99,7 +99,7 @@
                                 :pagination.sync="particpantsTable.pagination"
                               >
                                 <template v-slot:body="propss">
-                                  
+
                                   <q-tr :props="propss">
 
 
@@ -204,7 +204,7 @@
           <q-input filled dense v-model.trim="ParticpantsFormDialog.data.profile_image" label="Profile image for the participant (optional)"
           placeholder="Optional profile image URL 400/400px"></q-input>
           <q-input filled dense emit-value v-model.trim="ParticpantsFormDialog.data.lnaddress"
-          label="Where money goes *"></q-input>
+          label="LN Address where money goes *"></q-input>
         <div class="row q-mt-lg">
           <q-btn v-if="ParticpantsFormDialog.data.id" unelevated color="primary" type="submit" color="primary">Update particpiant</q-btn>
           <q-btn v-else unelevated color="primary"
@@ -236,7 +236,7 @@
       </div>
     </q-card>
   </q-dialog>
-  
+
 </div>
 {% endblock %} {% block scripts %} {{ window_vars(user) }}
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
@@ -379,7 +379,7 @@
           }
           this.RaiseFormDialog.advanced_time = true
         }
-        
+
         this.RaiseFormDialog.show = true
       },
       createraisenow(wallet, data) {
