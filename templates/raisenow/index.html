@@ -16,7 +16,7 @@
       <q-card-section>
         <div class="row items-center no-wrap q-mb-md">
           <div class="col">
-            <h5 class="text-subtitle1 q-my-none">raisenow</h5>
+            <h5 class="text-subtitle1 q-my-none">Raise Now</h5>
           </div>
           <div class="col-auto">
             <q-btn flat color="grey" @click="exportCSV">Export to CSV</q-btn>
@@ -26,10 +26,12 @@
           :pagination.sync="ranowTable.pagination">
           <template v-slot:header="props">
             <q-tr :props="props">
-              <q-th auto-width></q-th>
+              <q-th auto-width>
+              </q-th>
               <q-th v-for="col in props.cols" :key="col.name" :props="props">
                 ${ col.label }
               </q-th>
+
             </q-tr>
           </template>
 
@@ -50,9 +52,7 @@
                 <div v-if="col.field == 'total'">${ col.value / 1000} sats</div>
                 <div v-else>${ col.value }</div>
               </q-td>
-                <q-td auto-width>
-                  <q-btn unelevated dense size="sm" icon="qr_code" :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
-                    class="q-mr-sm" @click="openUrlDialog(props.row.id)"></q-btn></q-td>
+
               <q-td auto-width>
                 <q-btn unelevated dense size="sm" icon="launch" :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
                   type="a" :href="props.row.raisenow" target="_blank"><q-tooltip>Open public
@@ -69,6 +69,7 @@
                   <q-tooltip> Delete raise </q-tooltip>
                 </q-btn>
               </q-td>
+
 
             </q-tr>
             <q-tr v-show="props.expand" :props="props">
@@ -87,7 +88,7 @@
                               >
                             </div>
                           </div>
-                          
+
                           <div class="row items-center no-wrap q-mb-md">
                             <div class="col-12">
                               <q-table
@@ -99,12 +100,13 @@
                                 :pagination.sync="particpantsTable.pagination"
                               >
                                 <template v-slot:body="propss">
-                                  
+
                                   <q-tr :props="propss">
 
 
                                     <q-td v-for="col in propss.cols" :key="col.name" :props="propss">
-                                      <div>${ col.value }</div>
+                                      <div v-if="col.field == 'total'">${ col.value / 1000} sats</div>
+                                      <div v-else>${ col.value }</div>
                                     </q-td>
                                     <q-td auto-width>
                                       <q-btn unelevated dense size="sm" icon="qr_code" :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
@@ -204,7 +206,7 @@
           <q-input filled dense v-model.trim="ParticpantsFormDialog.data.profile_image" label="Profile image for the participant (optional)"
           placeholder="Optional profile image URL 400/400px"></q-input>
           <q-input filled dense emit-value v-model.trim="ParticpantsFormDialog.data.lnaddress"
-          label="Where money goes *"></q-input>
+          label="LN Address where money goes *" hint="Avoid using fixed amount. Set a lower min amount, fees might apply."></q-input>
         <div class="row q-mt-lg">
           <q-btn v-if="ParticpantsFormDialog.data.id" unelevated color="primary" type="submit" color="primary">Update particpiant</q-btn>
           <q-btn v-else unelevated color="primary"
@@ -236,7 +238,7 @@
       </div>
     </q-card>
   </q-dialog>
-  
+
 </div>
 {% endblock %} {% block scripts %} {{ window_vars(user) }}
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
@@ -281,7 +283,7 @@
               label: 'Wallet',
               field: 'wallet'
             },
-            { name: 'total', align: 'left', label: 'Total sent/received', field: 'total' },
+            { name: 'total', align: 'left', label: 'Total', field: 'total' },
           ],
           pagination: {
             rowsPerPage: 10
@@ -379,7 +381,7 @@
           }
           this.RaiseFormDialog.advanced_time = true
         }
-        
+
         this.RaiseFormDialog.show = true
       },
       createraisenow(wallet, data) {
