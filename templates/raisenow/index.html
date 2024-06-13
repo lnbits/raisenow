@@ -112,7 +112,7 @@
                                         size="sm"
                                         color="accent"
                                         dense
-                                        @click="openParticipantDialog(props.row.id)"
+                                        @click="updateParticipantForm(props.row.id)"
                                         icon="edit"
                                       ></q-btn>
                                     </q-td>
@@ -201,8 +201,10 @@
           placeholder="optional description for your raise "></q-input>
           <q-input filled dense v-model.trim="ParticpantsFormDialog.data.profile_image" label="Profile image for the participant (optional)"
           placeholder="Optional profile image URL 400/400px"></q-input>
+          <q-select filled dense emit-value v-model.trim="ParticpantsFormDialog.data.lnaddress"
+          label="Where money goes *"></q-select>
         <div class="row q-mt-lg">
-          <q-btn v-if="ParticpantsFormDialog.data.id" unelevated color="primary" type="submit" color="primary">Update raisenow</q-btn>
+          <q-btn v-if="ParticpantsFormDialog.data.id" unelevated color="primary" type="submit" color="primary">Update particpiant</q-btn>
           <q-btn v-else unelevated color="primary"
             :disable="ParticpantsFormDialog.data.name == null"
             type="submit">Create raisenow</q-btn>
@@ -226,27 +228,7 @@
 
       <q-separator></q-separator>
 
-      <div class="row justify-start q-mt-lg">
-        <div class="col col-md-auto">
-          <q-btn outline style="color: primmary;" @click="qrValue = urlDialog.data.lnurlpay">lnurlpay</q-btn>
 
-        </div>
-        <div class="col col-md-auto">
-          <q-btn outline style="color: primmary;" @click="qrValue = urlDialog.data.lnurlwithdraw">lnurlwithdraw</q-btn>
-
-        </div>
-        <div class="col q-pl-md">
-          <q-input filled bottom-slots dense v-model="invoiceAmount">
-            <template v-slot:append>
-              <q-btn round @click="createInvoice(urlDialog.data.wallet, urlDialog.data.id)" color="primary" flat
-                icon="add_circle" />
-            </template>
-            <template v-slot:hint>
-              Create an invoice
-            </template>
-          </q-input>
-        </div>
-      </div>
       <div class="row q-mt-lg">
         <q-btn v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
       </div>
@@ -388,10 +370,14 @@
         this.RaiseFormDialog.data = {
           ...raisenow
         }
-        this.RaiseFormDialog.data.live_dates = {
-          from: raisenow.live_dates.split(',')[0],
-          to: raisenow.live_dates.split(',')[1]
+        if(raisenow.live_dates){
+          this.RaiseFormDialog.data.live_dates = {
+            from: raisenow.live_dates.split(',')[0],
+            to: raisenow.live_dates.split(',')[1]
+          }
+          this.RaiseFormDialog.advanced_time = true
         }
+        
         this.RaiseFormDialog.show = true
       },
       createraisenow(wallet, data) {
@@ -507,6 +493,7 @@
         const data = {
           name: this.ParticpantsFormDialog.data.name,
           raisenow: this.ParticpantsFormDialog.data.raisenow,
+          lnaddress: this.ParticpantsFormDialog.data.lnaddress,
         }
         if(this.ParticpantsFormDialog.data.profile_image){
           data.profile_image = this.ParticpantsFormDialog.data.profile_image

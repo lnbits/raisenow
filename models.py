@@ -45,6 +45,8 @@ class CreateParticipantData(BaseModel):
     description: Optional[str]
     profile_image: Optional[str]
     total: Optional[int]
+    lnaddress: Optional[str]
+    invoice_key: Optional[str]
 
 
 class Participant(BaseModel):
@@ -54,6 +56,8 @@ class Participant(BaseModel):
     description: Optional[str]
     profile_image: Optional[str]
     total: Optional[int]
+    lnaddress: Optional[str]
+    invoice_key: Optional[str]
     lnurlpay: Optional[str]
 
     @classmethod
