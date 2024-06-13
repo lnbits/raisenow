@@ -48,8 +48,6 @@ async def raisenow(request: Request, raisenow_id):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="No participants found."
         )
-    logger.debug("$$$$", participants)
-    logger.debug(json.dumps([dict(p) for p in participants]))
     return raisenow_renderer().TemplateResponse(
         "raisenow/raisenow.html",
         {
