@@ -50,8 +50,8 @@ async def api_lnurl_pay(
                 "raisenow.api_lnurl_pay_callback", record_id=record_id
             )
         ),
-        "maxSendable": 10000,
-        "minSendable": 1000000000,
+        "maxSendable": 1000000000,
+        "minSendable": 10000,
         "metadata": '[["text/plain", "' + record.name + '"]]',
         "tag": "payRequest",
     }
