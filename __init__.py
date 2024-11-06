@@ -8,7 +8,7 @@ from .crud import db
 from .tasks import wait_for_paid_invoices
 from .views import raisenow_generic_router
 from .views_api import raisenow_api_router
-from .views_lnurl import raisenow_lnurl_router
+from .lnurl import raisenow_lnurl_router
 
 raisenow_ext: APIRouter = APIRouter(prefix="/raisenow", tags=["raisenow"])
 raisenow_ext.include_router(raisenow_generic_router)
