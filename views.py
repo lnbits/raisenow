@@ -36,12 +36,12 @@ async def index(request: Request, user: User = Depends(check_user_exists)):
 
 @raisenow_generic_router.get("/{raisenow_id}")
 async def raisenow(request: Request, raisenow_id):
-    raisenow = await get_raisenow(raisenow_id, request)
+    raisenow = await get_raisenow(raisenow_id)
     if not raisenow:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="raisenow does not exist."
         )
-    participants = await get_participants(raisenow_id, request)
+    participants = await get_participants(raisenow_id)
     if not participants:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="No participants found."

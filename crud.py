@@ -1,21 +1,21 @@
 from typing import List, Optional, Union
 
-from fastapi import Request
 from lnbits.db import Database
 from lnbits.helpers import urlsafe_short_hash
 
 from .models import CreateParticipantData, CreateRaiseNowData, Participant, RaiseNow
-
+from loguru import logger
 db = Database("ext_raisenow")
 
 
 async def create_raisenow(
-    wallet_id: str, data: CreateRaiseNowData, req: Request
+    wallet_id: str, data: CreateRaiseNowData
 ) -> CreateRaiseNowData:
     raisenow_id = urlsafe_short_hash()
     raisenow = CreateRaiseNowData(**data.dict(), wallet_id=wallet_id, id=raisenow_id)
+    logger.debug(raisenow)
     await db.insert("raisenow.raises", raisenow)
-    return await get_raisenow(raisenow_id, req)
+    return await get_raisenow(raisenow_id)
 
 
 async def get_raisenow(raisenow_id: str) -> Optional[RaiseNow]:
@@ -51,14 +51,14 @@ async def delete_raisenow(raisenow_id: str) -> None:
 
 
 async def create_participant(
-    wallet_id: str, data: CreateParticipantData, req: Request
+    wallet_id: str, data: CreateParticipantData
 ) -> CreateParticipantData:
     participant_id = urlsafe_short_hash()
     participant = CreateParticipantData(
         **data.dict(), wallet_id=wallet_id, id=participant_id
     )
     await db.insert("raisenow.participants", participant)
-    return await get_participant(participant_id, req)
+    return await get_participant(participant_id)
 
 
 async def get_participant(participant_id: str) -> Optional[Participant]:

@@ -5,7 +5,7 @@ async def m001_initial(db):
     await db.execute(
         """
         CREATE TABLE raisenow.raises (
-            id TEXT PRIMARY KEY,
+            id TEXT PRIMARY KEY NOT NULL,
             wallet TEXT NOT NULL,
             name TEXT NOT NULL,
             description TEXT,
@@ -26,7 +26,7 @@ async def m002_initial(db):
     await db.execute(
         """
         CREATE TABLE raisenow.participants (
-            id TEXT PRIMARY KEY,
+            id TEXT PRIMARY KEY NOT NULL,
             raisenow TEXT NOT NULL,
             name TEXT NOT NULL,
             description TEXT,

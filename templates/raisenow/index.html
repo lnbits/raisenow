@@ -473,35 +473,20 @@
           });
       },
       sendraisenowData() {
-        console.log(this.RaiseFormDialog.data.live_dates);
-        const data = {
-          name: this.RaiseFormDialog.data.name,
-          description: this.RaiseFormDialog.data.description,
-        };
         if (this.RaiseFormDialog.data.live_dates) {
-          data.live_dates = String(
+          this.RaiseFormDialog.data.live_dates = String(
             this.RaiseFormDialog.data.live_dates.from +
               "," +
               this.RaiseFormDialog.data.live_dates.to,
           );
         }
-        if (this.RaiseFormDialog.data.background_image) {
-          data.background_image = this.RaiseFormDialog.data.background_image;
-        }
-        if (this.RaiseFormDialog.data.header_image) {
-          data.header_image = this.RaiseFormDialog.data.header_image;
-        }
-
         const wallet = _.findWhere(this.g.user.wallets, {
           id: this.RaiseFormDialog.data.wallet,
         });
         if (this.RaiseFormDialog.data.id) {
-          data.id = this.RaiseFormDialog.data.id;
-          data.wallet = wallet.id;
-          data.total = this.RaiseFormDialog.data.total;
-          this.updateraisenow(wallet, data);
+          this.updateraisenow(wallet, this.RaiseFormDialog.data);
         } else {
-          this.createraisenow(wallet, data);
+          this.createraisenow(wallet, this.RaiseFormDialog.data);
         }
       },
       updateraisenowForm(tempId) {
@@ -534,7 +519,7 @@
         LNbits.api
           .request(
             "PUT",
-            `/raisenow/api/v1/ranow/${data.id}`,
+            `/raisenow/api/v1/ranow`,
             wallet.adminkey,
             data,
           )
@@ -630,7 +615,6 @@
           raisenow: raisenow.id,
           wallet: raisenow.wallet,
         };
-        console.log(this.ParticpantsFormDialog.data);
         this.ParticpantsFormDialog.show = true;
       },
       closeParticpantsFormDialog: function () {
@@ -638,25 +622,13 @@
         this.ParticpantsFormDialog.data = {};
       },
       sendParticipantData() {
-        const data = {
-          name: this.ParticpantsFormDialog.data.name,
-          raisenow: this.ParticpantsFormDialog.data.raisenow,
-          lnaddress: this.ParticpantsFormDialog.data.lnaddress,
-        };
-        if (this.ParticpantsFormDialog.data.profile_image) {
-          data.profile_image = this.ParticpantsFormDialog.data.profile_image;
-        }
-        if (this.ParticpantsFormDialog.data.description) {
-          data.description = this.ParticpantsFormDialog.data.description;
-        }
         const wallet = _.findWhere(this.g.user.wallets, {
           id: this.ParticpantsFormDialog.data.wallet,
         });
         if (this.ParticpantsFormDialog.data.id) {
-          data.id = this.ParticpantsFormDialog.data.id;
-          this.updateParticipant(wallet, data);
+          this.updateParticipant(wallet, this.ParticpantsFormDialog.data);
         } else {
-          this.createParticipant(wallet, data);
+          this.createParticipant(wallet, this.ParticpantsFormDialog.data);
         }
       },
       createParticipant(wallet, data) {
@@ -679,7 +651,7 @@
         LNbits.api
           .request(
             "PUT",
-            `/raisenow/api/v1/participant/${data.id}`,
+            `/raisenow/api/v1/participant`,
             wallet.adminkey,
             data,
           )
