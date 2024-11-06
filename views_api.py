@@ -18,7 +18,7 @@ from .crud import (
     update_participant,
     update_raisenow,
 )
-from .models import CreateParticipantData, CreateRaiseNowData
+from .models import CreateParticipantData, CreateRaiseNowData, RaiseNow
 
 raisenow_api_router = APIRouter()
 
@@ -31,7 +31,6 @@ raisenow_api_router = APIRouter()
 
 @raisenow_api_router.get("/api/v1/ranow", status_code=HTTPStatus.OK)
 async def api_raisenows(
-    req: Request,
     all_wallets: bool = Query(False),
     key_info: WalletTypeInfo = Depends(require_invoice_key),
 ):
@@ -39,7 +38,7 @@ async def api_raisenows(
     if all_wallets:
         user = await get_user(key_info.wallet.user)
         wallet_ids = user.wallet_ids if user else []
-    return [raisenow.dict() for raisenow in await get_raisenows(wallet_ids, req)]
+    return [raisenow.dict() for raisenow in await get_raisenows(wallet_ids)]
 
 
 ## Get a single record
@@ -62,26 +61,16 @@ async def api_raisenow(
 ## update a record
 
 
-@raisenow_api_router.put("/api/v1/ranow/{raisenow_id}", status_code=HTTPStatus.OK)
+@raisenow_api_router.put("/api/v1/ranow", status_code=HTTPStatus.OK)
 async def api_raisenow_update(
-    req: Request,
-    data: CreateRaiseNowData,
-    raisenow_id: str,
+    data: RaiseNow,
     key_info: WalletTypeInfo = Depends(require_invoice_key),
 ):
-    if not raisenow_id:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="raisenow does not exist."
-        )
-    raisenow = await get_raisenow(raisenow_id, req)
-    assert raisenow, "raisenow couldn't be retrieved"
-
-    if key_info.wallet.id != raisenow.wallet:
+    if key_info.wallet.id != data.wallet:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN, detail="Not your raisenow."
         )
-    raisenow = await update_raisenow(raisenow_id=raisenow_id, **data.dict(), req=req)
-    return raisenow.dict()
+    return await update_raisenow(data)
 
 
 ## Create a new record

@@ -27,7 +27,7 @@ def raisenow_renderer():
 @raisenow_generic_router.get("/", response_class=HTMLResponse)
 async def index(request: Request, user: User = Depends(check_user_exists)):
     return raisenow_renderer().TemplateResponse(
-        "raisenow/index.html", {"request": request, "user": user.dict()}
+        "raisenow/index.html", {"request": request, "user": user.json()}
     )
 
 
