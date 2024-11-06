@@ -1,7 +1,3 @@
-# the migration file is where you build your database tables
-# If you create a new release for your extension , remeember the migration file is like a blockchain, never edit only add!
-
-
 async def m001_initial(db):
     """
     Initial raises table. Includes lnurlpay for donating to all participants.
@@ -21,6 +17,7 @@ async def m001_initial(db):
         );
     """
     )
+
 
 async def m002_initial(db):
     """

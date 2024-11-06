@@ -1,27 +1,24 @@
 import asyncio
 import json
-from loguru import logger
 from math import floor
 from typing import Optional
-import httpx
 
+import httpx
 from lnbits import bolt11
-from lnbits.core.models import Payment
 from lnbits.core.crud import get_standalone_payment
 from lnbits.core.models import Payment
-
-from lnbits.core.services import create_invoice, websocket_updater, fee_reserve, pay_invoice
+from lnbits.core.services import fee_reserve, pay_invoice, websocket_updater
 from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
-from lnbits.core.views.api import api_lnurlscan
+from loguru import logger
 
-from .crud import get_raisenow, update_raisenow, get_participant, update_participant
+from .crud import get_participant, get_raisenow, update_participant, update_raisenow
 
 
 async def wait_for_paid_invoices():
-    logger.debug(get_current_extension_name())
     invoice_queue = asyncio.Queue()
     register_invoice_listener(invoice_queue, get_current_extension_name())
+
     while True:
         payment = await invoice_queue.get()
         await on_invoice_paid(payment)
@@ -30,8 +27,6 @@ async def wait_for_paid_invoices():
 async def on_invoice_paid(payment: Payment) -> None:
     if payment.extra.get("tag") != "raisenow":
         return
-
-
     record_id = payment.extra.get("recordId")
 
     amount_msat = int(payment.amount)
@@ -46,7 +41,10 @@ async def on_invoice_paid(payment: Payment) -> None:
     raisenow_total = int(raisenow_record.total or 0) + int(safe_amount_msat)
     raisenow_data_to_update = {"total": raisenow_total}
 
-    memo = f"LNbits raisenow to the raise {raisenow_record.name} for {participant_record.name}"
+    memo = (
+        f"LNbits raisenow to the raise {raisenow_record.name}"
+        f" for {participant_record.name}"
+    )
     payment_request = await get_lnurl_invoice(
         participant_record.lnaddress, payment.wallet_id, safe_amount_msat, memo
     )
@@ -56,7 +54,7 @@ async def on_invoice_paid(payment: Payment) -> None:
         "participant_total": participant_total,
         "raisenow": raisenow_record.id,
         "raisenow_total": raisenow_total,
-        "amount": safe_amount_msat
+        "amount": safe_amount_msat,
     }
     if payment_request:
         await pay_invoice(
@@ -71,17 +69,15 @@ async def on_invoice_paid(payment: Payment) -> None:
     await websocket_updater(raisenow_record.id, json.dumps(extra))
 
 
-async def get_lnurl_invoice(
-    lnaddress, wallet_id, amount_msat, memo
-) -> Optional[str]:
+async def get_lnurl_invoice(lnaddress, wallet_id, amount_msat, memo) -> Optional[str]:
 
     from lnbits.core.views.api import api_lnurlscan
 
     data = await api_lnurlscan(lnaddress)
     rounded_amount = floor(amount_msat / 1000) * 1000
 
-    commentAllowed = data.get("commentAllowed", 0)
-    memo = memo[0:commentAllowed]
+    comment_allowed = data.get("commentAllowed", 0)
+    memo = memo[0:comment_allowed]
 
     async with httpx.AsyncClient() as client:
         try:
@@ -99,7 +95,7 @@ async def get_lnurl_invoice(
             )
             return None
         except Exception as exc:
-            logger.error(f"splitting LNURL failed: {str(exc)}.")
+            logger.error(f"splitting LNURL failed: {exc!s}.")
             return None
 
     params = json.loads(r.text)
@@ -112,12 +108,13 @@ async def get_lnurl_invoice(
     lnurlp_payment = await get_standalone_payment(invoice.payment_hash)
 
     if lnurlp_payment and lnurlp_payment.wallet_id == wallet_id:
-        logger.error(f"split failed. cannot split payments to yourself via LNURL.")
+        logger.error("split failed. cannot split payments to yourself via LNURL.")
         return None
 
     if invoice.amount_msat != rounded_amount:
         logger.error(
-            f"{data['callback']} returned an invalid invoice. Expected {amount_msat} msat, got {invoice.amount_msat}."
+            f"{data['callback']} returned an invalid invoice."
+            f" Expected {amount_msat} msat, got {invoice.amount_msat}."
         )
         return None
 

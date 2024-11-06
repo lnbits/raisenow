@@ -1,17 +1,19 @@
 import asyncio
 
 from fastapi import APIRouter
+from lnbits.tasks import create_permanent_unique_task
+from loguru import logger
 
-from lnbits.db import Database
-from lnbits.helpers import template_renderer
-from lnbits.tasks import catch_everything_and_restart
+from .crud import db
+from .tasks import wait_for_paid_invoices
+from .views import raisenow_generic_router
+from .views_api import raisenow_api_router
+from .views_lnurl import raisenow_lnurl_router
 
-
-db = Database("ext_raisenow")
-
-raisenow_ext: APIRouter = APIRouter(
-    prefix="/raisenow", tags=["raisenow"]
-)
+raisenow_ext: APIRouter = APIRouter(prefix="/raisenow", tags=["raisenow"])
+raisenow_ext.include_router(raisenow_generic_router)
+raisenow_ext.include_router(raisenow_api_router)
+raisenow_ext.include_router(raisenow_lnurl_router)
 
 raisenow_static_files = [
     {
@@ -21,16 +23,20 @@ raisenow_static_files = [
 ]
 
 
-def raisenow_renderer():
-    return template_renderer(["raisenow/templates"])
+scheduled_tasks: list[asyncio.Task] = []
 
 
-from .lnurl import *
-from .tasks import wait_for_paid_invoices
-from .views import *
-from .views_api import *
+def raisenow_stop():
+    for task in scheduled_tasks:
+        try:
+            task.cancel()
+        except Exception as ex:
+            logger.warning(ex)
 
 
 def raisenow_start():
-    loop = asyncio.get_event_loop()
-    loop.create_task(catch_everything_and_restart(wait_for_paid_invoices))
+    task = create_permanent_unique_task("ext_raisenow", wait_for_paid_invoices)
+    scheduled_tasks.append(task)
+
+
+__all__ = ["db", "raisenow_ext", "raisenow_static_files"]

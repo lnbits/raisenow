@@ -1,14 +1,14 @@
 # Data models for your extension
 
-from sqlite3 import Row
-from typing import Optional, List
-from pydantic import BaseModel
-from fastapi import Request
+from typing import Optional
 
-from lnbits.lnurl import encode as lnurl_encode
-from urllib.parse import urlparse
+from fastapi import Request
+from pydantic import BaseModel
+
+from lnurl import encode as lnurl_encode
 
 # Raises - called raisenow as raises is a reserved keyword in Python
+
 
 class CreateRaiseNowData(BaseModel):
     name: str
@@ -29,22 +29,28 @@ class RaiseNow(BaseModel):
     background_image: Optional[str]
     header_image: Optional[str]
     live_dates: Optional[str]
-    total: Optional[int]
+    total: Optional[int] = 0
     live_dates: Optional[str]
     lnurlpay: Optional[str]
 
-    @classmethod
-    def from_row(cls, row: Row) -> "raisenow":
-        return cls(**dict(row))
+    def lnurlpay(self, req: Request) -> str:
+        url = req.url_for("raisenow.api_lnurl_pay", record_id=id)
+        url_str = str(url)
+        if url.netloc.endswith(".onion"):
+            url_str = url_str.replace("https://", "http://")
+
+        return lnurl_encode(url_str)
+
 
 # Participants
+
 
 class CreateParticipantData(BaseModel):
     name: str
     raisenow: str
     description: Optional[str]
     profile_image: Optional[str]
-    total: Optional[int]
+    total: Optional[int] = 0
     lnaddress: Optional[str]
 
 
@@ -56,8 +62,11 @@ class Participant(BaseModel):
     profile_image: Optional[str]
     total: Optional[int]
     lnaddress: Optional[str]
-    lnurlpay: Optional[str]
 
-    @classmethod
-    def from_row(cls, row: Row) -> "raisenow":
-        return cls(**dict(row))
+    def lnurlpay(self, req: Request) -> str:
+        url = req.url_for("raisenow.api_lnurl_pay", record_id=id)
+        url_str = str(url)
+        if url.netloc.endswith(".onion"):
+            url_str = url_str.replace("https://", "http://")
+
+        return lnurl_encode(url_str)
