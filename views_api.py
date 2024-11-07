@@ -77,8 +77,10 @@ async def api_raisenow_create(
     data: CreateRaiseNowData,
     key_info: WalletTypeInfo = Depends(require_admin_key),
 ):
-    raisenow = await create_raisenow(wallet_id=key_info.wallet.id, data=data)
-    return raisenow
+    await create_raisenow(wallet_id=key_info.wallet.id, data=data)
+    user = await get_user(key_info.wallet.user)
+    wallet_ids = user.wallet_ids if user else []
+    return [raisenow for raisenow in await get_raisenows(wallet_ids)]
 
 
 ## Delete a record
@@ -169,7 +171,11 @@ async def api_participant_update(
             status_code=HTTPStatus.FORBIDDEN, detail="Not your raisenow."
         )
     participant = await update_participant(data)
-    return participant
+    if not participant:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Could not update participants."
+        )
+    return await api_participants(participant.raisenow)
 
 
 ## Create a new record
@@ -183,7 +189,11 @@ async def api_participant_create(
     participant = await create_participant(
         wallet_id=key_info.wallet.id, data=data
     )
-    return participant
+    if not participant:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Could not create participants."
+        )
+    return await api_participants(participant.raisenow)
 
 
 ## Delete a record
