@@ -4,7 +4,7 @@ from typing import Optional
 
 from fastapi import Request
 from pydantic import BaseModel
-
+from loguru import logger
 from lnurl import encode as lnurl_encode
 
 # Raises - called raisenow as raises is a reserved keyword in Python
@@ -33,7 +33,8 @@ class RaiseNow(BaseModel):
     live_dates: Optional[str]
 
     def lnurlpay(self, req: Request) -> str:
-        url = req.url_for("raisenow.api_lnurl_pay", record_id=id)
+        url = req.url_for("raisenow.api_lnurl_pay", record_id=self.id)
+        logger.debug(url)
         url_str = str(url)
         if url.netloc.endswith(".onion"):
             url_str = url_str.replace("https://", "http://")
@@ -63,7 +64,7 @@ class Participant(BaseModel):
     lnaddress: Optional[str]
 
     def lnurlpay(self, req: Request) -> str:
-        url = req.url_for("raisenow.api_lnurl_pay", record_id=id)
+        url = req.url_for("raisenow.api_lnurl_pay", record_id=self.id)
         url_str = str(url)
         if url.netloc.endswith(".onion"):
             url_str = url_str.replace("https://", "http://")

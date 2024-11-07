@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from lnbits.core.crud import get_user
 from lnbits.core.models import WalletTypeInfo
 from lnbits.decorators import require_admin_key, require_invoice_key
@@ -18,7 +18,7 @@ from .crud import (
     update_participant,
     update_raisenow,
 )
-from .models import CreateParticipantData, CreateRaiseNowData, RaiseNow
+from .models import CreateParticipantData, CreateRaiseNowData, RaiseNow, Participant
 
 raisenow_api_router = APIRouter()
 
@@ -31,11 +31,14 @@ raisenow_api_router = APIRouter()
 
 @raisenow_api_router.get("/api/v1/ranow", status_code=HTTPStatus.OK)
 async def api_raisenows(
-    key_info: WalletTypeInfo = Depends(require_invoice_key),
+    req: Request, key_info: WalletTypeInfo = Depends(require_invoice_key),
 ):
     user = await get_user(key_info.wallet.user)
     wallet_ids = user.wallet_ids if user else []
-    return [raisenow for raisenow in await get_raisenows(wallet_ids)]
+    return [
+            {**raisenow.dict(), "lnurlpay": raisenow.lnurlpay(req)}
+            for raisenow in await get_raisenows(wallet_ids)
+        ]
 
 
 ## Get a single record
@@ -43,6 +46,7 @@ async def api_raisenows(
 
 @raisenow_api_router.get("/api/v1/ranow/{raisenow_id}", status_code=HTTPStatus.OK)
 async def api_raisenow(
+    req: Request,
     raisenow_id: str,
     key_info: WalletTypeInfo = Depends(require_invoice_key),
 ):
@@ -51,7 +55,7 @@ async def api_raisenow(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="raisenow does not exist."
         )
-    return raisenow
+    return {**raisenow.dict(), **{"lnurlpay": raisenow.lnurl(req)}}
 
 
 ## update a record
@@ -59,6 +63,7 @@ async def api_raisenow(
 
 @raisenow_api_router.put("/api/v1/ranow", status_code=HTTPStatus.OK)
 async def api_raisenow_update(
+    req: Request,
     data: RaiseNow,
     key_info: WalletTypeInfo = Depends(require_invoice_key),
 ):
@@ -66,21 +71,20 @@ async def api_raisenow_update(
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN, detail="Not your raisenow."
         )
-    return await update_raisenow(data)
-
+    raisenow = await update_raisenow(data)
+    return {**raisenow.dict(), **{"lnurlpay": raisenow.lnurl(req)}}
 
 ## Create a new record
 
 
 @raisenow_api_router.post("/api/v1/ranow", status_code=HTTPStatus.CREATED)
 async def api_raisenow_create(
+    req: Request,
     data: CreateRaiseNowData,
     key_info: WalletTypeInfo = Depends(require_admin_key),
 ):
-    await create_raisenow(wallet_id=key_info.wallet.id, data=data)
-    user = await get_user(key_info.wallet.user)
-    wallet_ids = user.wallet_ids if user else []
-    return [raisenow for raisenow in await get_raisenows(wallet_ids)]
+    raisenow = await create_raisenow(wallet_id=key_info.wallet.id, data=data)
+    return {**raisenow.dict(), **{"lnurlpay": raisenow.lnurl(req)}}
 
 
 ## Delete a record
@@ -116,16 +120,16 @@ async def api_raisenow_delete(
 @raisenow_api_router.get(
     "/api/v1/participants/{raisenow_id}", status_code=HTTPStatus.OK
 )
-async def api_participants(raisenow_id: str):
+async def api_participants(req: Request, raisenow_id: str):
     participants = await get_participants(raisenow_id)
     if not participants:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
         )
     return [
-        participant for participant in await get_participants(raisenow_id)
-    ]
-
+            {**participant.dict(), "lnurlpay": participant.lnurlpay(req)}
+            for participant in await get_participants(raisenow_id)
+        ]
 
 ## Get a single record
 
@@ -134,6 +138,7 @@ async def api_participants(raisenow_id: str):
     "/api/v1/participant/{participant_id}", status_code=HTTPStatus.OK
 )
 async def api_participant(
+    req: Request,
     participant_id: str,
     key_info: WalletTypeInfo = Depends(require_invoice_key),
 ):
@@ -142,7 +147,7 @@ async def api_participant(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
         )
-    return participant
+    return {**participant.dict(), **{"lnurlpay": participant.lnurl(req)}}
 
 
 ## update a record
@@ -152,15 +157,11 @@ async def api_participant(
     "/api/v1/participant/{participant_id}", status_code=HTTPStatus.OK
 )
 async def api_participant_update(
-    data: CreateParticipantData,
-    participant_id: str,
+    req: Request,
+    data: Participant,
     key_info: WalletTypeInfo = Depends(require_invoice_key),
 ):
-    if not participant_id:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
-        )
-    participant = await get_participant(participant_id)
+    participant = await get_participant(data.id)
     assert participant, "participant couldn't be retrieved"
 
     raisenow = await get_raisenow(participant.raisenow)
@@ -175,25 +176,19 @@ async def api_participant_update(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Could not update participants."
         )
-    return await api_participants(participant.raisenow)
-
+    return {**participant.dict(), **{"lnurlpay": participant.lnurl(req)}}
 
 ## Create a new record
 
 
 @raisenow_api_router.post("/api/v1/participant", status_code=HTTPStatus.CREATED)
 async def api_participant_create(
+    req: Request,
     data: CreateParticipantData,
     key_info: WalletTypeInfo = Depends(require_admin_key),
 ):
-    participant = await create_participant(
-        wallet_id=key_info.wallet.id, data=data
-    )
-    if not participant:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Could not create participants."
-        )
-    return await api_participants(participant.raisenow)
+    participant = await create_participant(wallet_id=key_info.wallet.id, data=data)
+    return {**participant.dict(), **{"lnurlpay": participant.lnurl(req)}}
 
 
 ## Delete a record

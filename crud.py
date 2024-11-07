@@ -2,9 +2,10 @@ from typing import List, Optional, Union
 
 from lnbits.db import Database
 from lnbits.helpers import urlsafe_short_hash
+from loguru import logger
 
 from .models import CreateParticipantData, CreateRaiseNowData, Participant, RaiseNow
-from loguru import logger
+
 db = Database("ext_raisenow")
 
 

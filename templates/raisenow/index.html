@@ -5,8 +5,7 @@
 {% extends "base.html" %} {% from "macros.jinja" import window_vars with context
 %}{% block scripts %} {{ window_vars(user) }}
 <script src="{{ static_url_for('raisenow/static', path='index.js') }}"></script>
-{% endblock %}
-{% block page %}
+{% endblock %} {% block page %}
 <div class="row q-col-gutter-md" id="makeItRain">
   <div class="col-12 col-md-8 col-lg-7 q-gutter-y-md">
     <q-card>
@@ -30,10 +29,10 @@
         <q-table
           dense
           flat
-          :data="ranow"
+          :rows="ranow"
           row-key="id"
           :columns="ranowTable.columns"
-          :pagination.sync="ranowTable.pagination"
+          v-model:pagination="ranowTable.pagination"
         >
           <template v-slot:header="props">
             <q-tr :props="props">
@@ -59,7 +58,9 @@
               </q-td>
 
               <q-td v-for="col in props.cols" :key="col.name" :props="props">
-                <div v-if="col.field == 'total'"><span v-text="col.value / 1000, 'sats'"></span></div>
+                <div v-if="col.field == 'total'">
+                  <span v-text="col.value / 1000, 'sats'"></span>
+                </div>
                 <div v-else><span v-text="col.value"></span></div>
               </q-td>
 
@@ -125,10 +126,10 @@
                           <q-table
                             flat
                             dense
-                            :data="participantArray(props.row.id)"
+                            :rows="participantArray(props.row.id)"
                             row-key="id"
                             :columns="particpantsTable.columns"
-                            :pagination.sync="particpantsTable.pagination"
+                            v-model:pagination.sync="particpantsTable.pagination"
                           >
                             <template v-slot:body="propss">
                               <q-tr :props="propss">
@@ -138,9 +139,13 @@
                                   :props="propss"
                                 >
                                   <div v-if="col.field == 'total'">
-                                    <span v-text="col.value / 1000, 'sats'"></span>
+                                    <span
+                                      v-text="col.value / 1000, 'sats'"
+                                    ></span>
                                   </div>
-                                  <div v-else><span v-text="col.value"></span></div>
+                                  <div v-else>
+                                    <span v-text="col.value"></span>
+                                  </div>
                                 </q-td>
                                 <q-td auto-width>
                                   <q-btn
@@ -376,4 +381,3 @@
   </q-dialog>
 </div>
 {% endblock %}
-
