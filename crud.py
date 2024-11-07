@@ -12,7 +12,7 @@ async def create_raisenow(
     wallet_id: str, data: CreateRaiseNowData
 ) -> CreateRaiseNowData:
     raisenow_id = urlsafe_short_hash()
-    raisenow = CreateRaiseNowData(**data.dict(), wallet_id=wallet_id, id=raisenow_id)
+    raisenow = RaiseNow(**data.dict(), wallet_id=wallet_id, id=raisenow_id)
     logger.debug(raisenow)
     await db.insert("raisenow.raises", raisenow)
     return await get_raisenow(raisenow_id)

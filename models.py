@@ -31,7 +31,6 @@ class RaiseNow(BaseModel):
     live_dates: Optional[str]
     total: Optional[int] = 0
     live_dates: Optional[str]
-    lnurlpay: Optional[str]
 
     def lnurlpay(self, req: Request) -> str:
         url = req.url_for("raisenow.api_lnurl_pay", record_id=id)

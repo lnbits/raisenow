@@ -31,13 +31,10 @@ raisenow_api_router = APIRouter()
 
 @raisenow_api_router.get("/api/v1/ranow", status_code=HTTPStatus.OK)
 async def api_raisenows(
-    all_wallets: bool = Query(False),
     key_info: WalletTypeInfo = Depends(require_invoice_key),
 ):
-    wallet_ids = [key_info.wallet.id]
-    if all_wallets:
-        user = await get_user(key_info.wallet.user)
-        wallet_ids = user.wallet_ids if user else []
+    user = await get_user(key_info.wallet.user)
+    wallet_ids = user.wallet_ids if user else []
     return [raisenow for raisenow in await get_raisenows(wallet_ids)]
 
 

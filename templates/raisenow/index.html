@@ -451,28 +451,25 @@
     ///////////////////////////////////////////////////
     methods: {
       ///////////////// Raises ///////////////////
-      closeRaiseFormDialog() {
+      async closeRaiseFormDialog() {
         this.RaiseFormDialog.show = false;
         this.RaiseFormDialog.data = {};
         this.RaiseFormDialog.advanced_time = false;
       },
-      getraisenows: function () {
-        var self = this;
-
+      async getraisenows() {
         LNbits.api
           .request(
             "GET",
-            "/raisenow/api/v1/ranow?all_wallets=true",
+            "/raisenow/api/v1/ranow",
             this.g.user.wallets[0].inkey,
           )
           .then(function (response) {
-            console.log(response.data);
-            self.ranow = response.data.map(function (obj) {
+            this.ranow = response.data.map(function (obj) {
               return mapraisenow(obj);
             });
           });
       },
-      sendraisenowData() {
+      async sendraisenowData() {
         if (this.RaiseFormDialog.data.live_dates) {
           this.RaiseFormDialog.data.live_dates = String(
             this.RaiseFormDialog.data.live_dates.from +
@@ -489,7 +486,7 @@
           this.createraisenow(wallet, this.RaiseFormDialog.data);
         }
       },
-      updateraisenowForm(tempId) {
+      async updateraisenowForm(tempId) {
         const raisenow = _.findWhere(this.ranow, { id: tempId });
         this.RaiseFormDialog.data = {
           ...raisenow,
@@ -504,7 +501,7 @@
 
         this.RaiseFormDialog.show = true;
       },
-      createraisenow(wallet, data) {
+      async createraisenow(wallet, data) {
         LNbits.api
           .request("POST", "/raisenow/api/v1/ranow", wallet.adminkey, data)
           .then((response) => {
@@ -515,7 +512,7 @@
             LNbits.utils.notifyApiError(error);
           });
       },
-      updateraisenow(wallet, data) {
+      async updateraisenow(wallet, data) {
         LNbits.api
           .request(
             "PUT",
@@ -534,9 +531,8 @@
             LNbits.utils.notifyApiError(error);
           });
       },
-      deleteraisenow: function (tempId) {
-        var self = this;
-        var raisenow = _.findWhere(this.ranow, { id: tempId });
+      async deleteraisenow(tempId) {
+        let raisenow = _.findWhere(this.ranow, { id: tempId });
 
         LNbits.utils
           .confirmDialog("Are you sure you want to delete this raisenow?")
@@ -545,11 +541,11 @@
               .request(
                 "DELETE",
                 "/raisenow/api/v1/ranow/" + tempId,
-                _.findWhere(self.g.user.wallets, { id: raisenow.wallet })
+                _.findWhere(this.g.user.wallets, { id: raisenow.wallet })
                   .adminkey,
               )
               .then(function (response) {
-                self.ranow = _.reject(self.ranow, function (obj) {
+                this.ranow = _.reject(this.ranow, function (obj) {
                   return obj.id == tempId;
                 });
               })
@@ -558,10 +554,10 @@
               });
           });
       },
-      exportCSV: function () {
+      async exportCSV() {
         LNbits.utils.exportCSV(this.ranowTable.columns, this.ranow);
       },
-      openRaiseFormDialog(id) {
+      async openRaiseFormDialog(id) {
         const [tempId, itemId] = id.split(":");
         const raisenow = _.findWhere(this.ranow, { id: tempId });
         if (itemId) {
@@ -576,39 +572,35 @@
         this.RaiseFormDialog.data.currency = raisenow.currency;
         this.RaiseFormDialog.show = true;
       },
-      closeRaiseFormDialog() {
+      async closeRaiseFormDialog() {
         this.RaiseFormDialog.show = false;
         this.RaiseFormDialog.data = {};
       },
-      openUrlDialog(id) {
+      async openUrlDialog(id) {
         this.urlDialog.data = _.findWhere(this.ranow, { id });
         this.urlDialog.data = _.findWhere(this.participants, { id });
         this.qrValue = this.urlDialog.data.lnurlpay;
-        console.log(this.urlDialog.data.id);
         this.connectWebocket(this.urlDialog.data.id);
         this.urlDialog.show = true;
       },
       ///////////////// Participants ///////////////////
-      getparticipants: function (raID) {
-        console.log(this.g.user.wallets[0].inkey);
-        var self = this;
+      async getparticipants(raID) {
         LNbits.api
           .request("GET", "/raisenow/api/v1/participants/" + raID)
           .then(function (response) {
-            console.log(response.data);
-            self.participants = response.data.map(function (obj) {
+            this.participants = response.data.map(function (obj) {
               return mapparticipants(obj);
             });
           });
       },
-      openParticipantDialog: function (raisenow) {
+      async openParticipantDialog(raisenow) {
         this.ParticpantsFormDialog.data = {
           raisenow: raisenow.id,
           wallet: raisenow.wallet,
         };
         this.ParticpantsFormDialog.show = true;
       },
-      updateParticipantForm(tempId, raisenow) {
+      async updateParticipantForm(tempId, raisenow) {
         const participant = _.findWhere(this.participants, { id: tempId });
         this.ParticpantsFormDialog.data = {
           ...participant,
@@ -617,11 +609,11 @@
         };
         this.ParticpantsFormDialog.show = true;
       },
-      closeParticpantsFormDialog: function () {
+      async closeParticpantsFormDialog() {
         this.ParticpantsFormDialog.show = false;
         this.ParticpantsFormDialog.data = {};
       },
-      sendParticipantData() {
+      async sendParticipantData() {
         const wallet = _.findWhere(this.g.user.wallets, {
           id: this.ParticpantsFormDialog.data.wallet,
         });
@@ -631,7 +623,7 @@
           this.createParticipant(wallet, this.ParticpantsFormDialog.data);
         }
       },
-      createParticipant(wallet, data) {
+      async createParticipant(wallet, data) {
         LNbits.api
           .request(
             "POST",
@@ -647,7 +639,7 @@
             LNbits.utils.notifyApiError(error);
           });
       },
-      updateParticipant(wallet, data) {
+      async updateParticipant(wallet, data) {
         LNbits.api
           .request(
             "PUT",
@@ -666,14 +658,13 @@
             LNbits.utils.notifyApiError(error);
           });
       },
-      deleteAllParticipants: function (participantId) {
-        var self = this;
-        var raisenow = _.findWhere(this.participants, { id: participantId });
+      async deleteAllParticipants(participantId) {
+        let raisenow = _.findWhere(this.participants, { id: participantId });
 
         LNbits.utils
           .confirmDialog("Are you sure you want to delete all participants?")
           .onOk(function () {
-            var wallet = _.findWhere(self.g.user.wallets, {
+            let wallet = _.findWhere(this.g.user.wallets, {
               id: raisenow.wallet,
             });
             LNbits.api
@@ -683,7 +674,7 @@
                 wallet.adminkey,
               )
               .then(function (response) {
-                self.ranow = _.reject(self.ranow, function (obj) {
+                this.ranow = _.reject(this.ranow, function (obj) {
                   return obj.id == participantId;
                 });
               })
@@ -692,11 +683,9 @@
               });
           });
       },
-      deleteParticipant: function (participantId) {
-        var self = this;
-        var participant = _.findWhere(this.participants, { id: participantId });
-        var raisenow = _.findWhere(this.ranow, { id: participant.raisenow });
-        console.log(raisenow);
+      async deleteParticipant(participantId) {
+        let participant = _.findWhere(this.participants, { id: participantId });
+        let raisenow = _.findWhere(this.ranow, { id: participant.raisenow });
         LNbits.utils
           .confirmDialog("Are you sure you want to delete this participant?")
           .onOk(function () {
@@ -704,11 +693,11 @@
               .request(
                 "DELETE",
                 "/raisenow/api/v1/participant/" + participantId,
-                _.findWhere(self.g.user.wallets, { id: raisenow.wallet })
+                _.findWhere(this.g.user.wallets, { id: raisenow.wallet })
                   .adminkey,
               )
               .then(function (response) {
-                self.participants = _.reject(self.participants, function (obj) {
+                this.participants = _.reject(this.participants, function (obj) {
                   return obj.id == participantId;
                 });
               })
@@ -717,20 +706,19 @@
               });
           });
       },
-      participantArray: function (partId) {
+      async participantArray(partId) {
         return this.participants.filter(function (obj) {
           return obj.raisenow == partId;
         });
       },
-      handleClick(id, props) {
-        console.log(id);
+      async handleClick(id, props) {
         this.getparticipants(id);
         props.expand = !props.expand;
       },
-      makeItRain: function () {
+      async makeItRain() {
         document.getElementById("vue").disabled = true;
-        var end = Date.now() + 2 * 1000;
-        var colors = ["#FFD700", "#ffffff"];
+        let end = Date.now() + 2 * 1000;
+        let colors = ["#FFD700", "#ffffff"];
         function frame() {
           confetti({
             particleCount: 2,
@@ -756,8 +744,7 @@
         }
         frame();
       },
-      connectWebocket: function (wallet_id) {
-        self = this;
+      async connectWebocket(wallet_id) {
         if (location.protocol !== "http:") {
           localUrl =
             "wss://" +
@@ -777,7 +764,7 @@
         }
         this.connection = new WebSocket(localUrl);
         this.connection.onmessage = function (e) {
-          self.makeItRain();
+          await this.makeItRain();
         };
       },
     },
@@ -785,10 +772,8 @@
     ///////////////////////////////////////////////////
     //////LIFECYCLE FUNCTIONS RUNNING ON PAGE LOAD/////
     ///////////////////////////////////////////////////
-    created: function () {
-      if (this.g.user.wallets.length) {
-        this.getraisenows();
-      }
+    async created(){
+      await this.getraisenows();
     },
   });
 </script>
