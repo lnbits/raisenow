@@ -117,7 +117,7 @@ window.app = Vue.createApp({
         };
         this.RaiseFormDialog.advanced_time = true;
       }
-
+      console.log(this.RaiseFormDialog.data);
       this.RaiseFormDialog.show = true;
     },
     async createraisenow(wallet, data) {
@@ -138,7 +138,8 @@ window.app = Vue.createApp({
           this.ranow = _.reject(this.ranow, (obj) => {
             return obj.id == data.id;
           });
-          this.ranow = response.data.map(mapraisenow);
+          this.ranow.push(response.data);
+          console.log(this.ranow);
           this.closeRaiseFormDialog();
         })
         .catch((error) => {
@@ -205,8 +206,11 @@ window.app = Vue.createApp({
           if (response.data != null) {
             this.participants = response.data;
           }
-          console.log(this.ranow);
+          console.log(this.participants);
         })
+        .catch((error) => {
+          LNbits.utils.notifyApiError(error);
+        });
     },
     async openParticipantDialog(raisenow) {
       this.ParticpantsFormDialog.data = {
@@ -256,6 +260,7 @@ window.app = Vue.createApp({
           this.participants = _.reject(this.participants, (obj) => {
             return obj.id == data.id;
           });
+          this.participants.push(response.data);
           this.closeParticpantsFormDialog();
         })
         .catch((error) => {
@@ -311,9 +316,10 @@ window.app = Vue.createApp({
         });
     },
     async participantArray(partId) {
-      return this.participants.filter(function (obj) {
+      partiipants = this.participants.filter(function (obj) {
         return obj.raisenow == partId;
       });
+      console.log(partiipants);
     },
     async handleClick(id, props) {
       this.getparticipants(id);

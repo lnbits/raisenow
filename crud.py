@@ -14,7 +14,6 @@ async def create_raisenow(
 ) -> CreateRaiseNowData:
     raisenow_id = urlsafe_short_hash()
     raisenow = RaiseNow(**data.dict(), wallet_id=wallet_id, id=raisenow_id)
-    logger.debug(raisenow)
     await db.insert("raisenow.raises", raisenow)
     return await get_raisenow(raisenow_id)
 
@@ -52,11 +51,11 @@ async def delete_raisenow(raisenow_id: str) -> None:
 
 
 async def create_participant(
-    wallet_id: str, data: CreateParticipantData
+    data: CreateParticipantData
 ) -> CreateParticipantData:
     participant_id = urlsafe_short_hash()
-    participant = CreateParticipantData(
-        **data.dict(), wallet_id=wallet_id, id=participant_id
+    participant = Participant(
+        **data.dict(), id=participant_id
     )
     await db.insert("raisenow.participants", participant)
     return await get_participant(participant_id)
@@ -69,17 +68,12 @@ async def get_participant(participant_id: str) -> Optional[Participant]:
         Participant,
     )
 
-
 async def get_participants(raisenow_id: str) -> List[RaiseNow]:
     return await db.fetchall(
-        """
-        SELECT * FROM raisenow.participants
-        WHERE raisenow = :raisenow ORDER BY
-        total DESC, name ASC
-        """,
+        "SELECT * FROM raisenow.participants WHERE raisenow = :raisenow",
         {"raisenow": raisenow_id},
+        Participant,
     )
-
 
 async def update_participant(participant: Participant) -> Participant:
     await db.update("raisenow.participants", participant)

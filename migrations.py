@@ -37,3 +37,23 @@ async def m002_initial(db):
         );
     """
     )
+
+async def m003_drop_lnurlpay(db):
+    """
+    Migration to drop lnurlpay columns from raisenow.raises and raisenow.participants.
+    """
+    # Drop lnurlpay from raisenow.raises
+    await db.execute(
+        """
+        ALTER TABLE raisenow.raises
+        DROP COLUMN lnurlpay;
+        """
+    )
+
+    # Drop lnurlpay from raisenow.participants
+    await db.execute(
+        """
+        ALTER TABLE raisenow.participants
+        DROP COLUMN lnurlpay;
+        """
+    )

@@ -28,7 +28,6 @@ raisenow_api_router = APIRouter()
 
 ## Get all the records belonging to the user
 
-
 @raisenow_api_router.get("/api/v1/ranow", status_code=HTTPStatus.OK)
 async def api_raisenows(
     req: Request, key_info: WalletTypeInfo = Depends(require_invoice_key),
@@ -55,7 +54,7 @@ async def api_raisenow(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="raisenow does not exist."
         )
-    return {**raisenow.dict(), **{"lnurlpay": raisenow.lnurl(req)}}
+    return {**raisenow.dict(), **{"lnurlpay": raisenow.lnurlpay(req)}}
 
 
 ## update a record
@@ -72,7 +71,7 @@ async def api_raisenow_update(
             status_code=HTTPStatus.FORBIDDEN, detail="Not your raisenow."
         )
     raisenow = await update_raisenow(data)
-    return {**raisenow.dict(), **{"lnurlpay": raisenow.lnurl(req)}}
+    return {**raisenow.dict(), **{"lnurlpay": raisenow.lnurlpay(req)}}
 
 ## Create a new record
 
@@ -84,7 +83,7 @@ async def api_raisenow_create(
     key_info: WalletTypeInfo = Depends(require_admin_key),
 ):
     raisenow = await create_raisenow(wallet_id=key_info.wallet.id, data=data)
-    return {**raisenow.dict(), **{"lnurlpay": raisenow.lnurl(req)}}
+    return {**raisenow.dict(), **{"lnurlpay": raisenow.lnurlpay(req)}}
 
 
 ## Delete a record
@@ -147,7 +146,7 @@ async def api_participant(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
         )
-    return {**participant.dict(), **{"lnurlpay": participant.lnurl(req)}}
+    return {**participant.dict(), **{"lnurlpay": participant.lnurlpay(req)}}
 
 
 ## update a record
@@ -176,7 +175,7 @@ async def api_participant_update(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Could not update participants."
         )
-    return {**participant.dict(), **{"lnurlpay": participant.lnurl(req)}}
+    return {**participant.dict(), **{"lnurlpay": participant.lnurlpay(req)}}
 
 ## Create a new record
 
@@ -187,8 +186,8 @@ async def api_participant_create(
     data: CreateParticipantData,
     key_info: WalletTypeInfo = Depends(require_admin_key),
 ):
-    participant = await create_participant(wallet_id=key_info.wallet.id, data=data)
-    return {**participant.dict(), **{"lnurlpay": participant.lnurl(req)}}
+    participant = await create_participant(data=data)
+    return {**participant.dict(), **{"lnurlpay": participant.lnurlpay(req)}}
 
 
 ## Delete a record
