@@ -43,11 +43,10 @@ async def api_raisenows(
 ## Get a single record
 
 
-@raisenow_api_router.get("/api/v1/ranow/{raisenow_id}", status_code=HTTPStatus.OK)
+@raisenow_api_router.get("/api/v1/ranow/{raisenow_id}", status_code=HTTPStatus.OK, dependencies=[Depends(require_invoice_key)])
 async def api_raisenow(
     req: Request,
-    raisenow_id: str,
-    key_info: WalletTypeInfo = Depends(require_invoice_key),
+    raisenow_id: str
 ):
     raisenow = await get_raisenow(raisenow_id)
     if not raisenow:
@@ -134,12 +133,11 @@ async def api_participants(req: Request, raisenow_id: str):
 
 
 @raisenow_api_router.get(
-    "/api/v1/participant/{participant_id}", status_code=HTTPStatus.OK
+    "/api/v1/participant/{participant_id}", status_code=HTTPStatus.OK, dependencies=[Depends(require_invoice_key)]
 )
 async def api_participant(
     req: Request,
-    participant_id: str,
-    key_info: WalletTypeInfo = Depends(require_invoice_key),
+    participant_id: str
 ):
     participant = await get_participant(participant_id)
     if not participant:
@@ -180,11 +178,10 @@ async def api_participant_update(
 ## Create a new record
 
 
-@raisenow_api_router.post("/api/v1/participant", status_code=HTTPStatus.CREATED)
+@raisenow_api_router.post("/api/v1/participant", status_code=HTTPStatus.CREATED, dependencies=[Depends(require_invoice_key)])
 async def api_participant_create(
     req: Request,
-    data: CreateParticipantData,
-    key_info: WalletTypeInfo = Depends(require_admin_key),
+    data: CreateParticipantData
 ):
     participant = await create_participant(data=data)
     return {**participant.dict(), **{"lnurlpay": participant.lnurlpay(req)}}
