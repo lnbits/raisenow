@@ -22,7 +22,9 @@ window.app = Vue.createApp({
       invoiceAmount: 10,
       qrValue: "lnurlpay",
       ranow: [],
-      participants: [],
+      participants: {
+        data: [],
+      },
       ranowTable: {
         columns: [
           { name: "id", align: "left", label: "ID", field: "id" },
@@ -39,7 +41,7 @@ window.app = Vue.createApp({
           rowsPerPage: 10,
         },
       },
-      particpantsTable: {
+      participantsTable: {
         columns: [
           { name: "id", align: "left", label: "ID", field: "id" },
           { name: "name", align: "left", label: "Name", field: "name" },
@@ -54,7 +56,7 @@ window.app = Vue.createApp({
         data: {},
         advanced_time: false,
       },
-      ParticpantsFormDialog: {
+      ParticipantsFormDialog: {
         show: false,
         data: {},
       },
@@ -124,7 +126,7 @@ window.app = Vue.createApp({
       await LNbits.api
         .request("POST", "/raisenow/api/v1/ranow", wallet.adminkey, data)
         .then((response) => {
-          this.ranow = response.data.map(mapraisenow);
+          this.ranow.push(response.data);
           this.closeRaiseFormDialog();
         })
         .catch((error) => {
@@ -193,61 +195,68 @@ window.app = Vue.createApp({
     },
     async openUrlDialog(id) {
       this.urlDialog.data = _.findWhere(this.ranow, { id });
-      this.urlDialog.data = _.findWhere(this.participants, { id });
+      this.urlDialog.data = _.findWhere(this.participants.data, { id });
       this.qrValue = this.urlDialog.data.lnurlpay;
       this.connectWebocket(this.urlDialog.data.id);
       this.urlDialog.show = true;
     },
     ///////////////// Participants ///////////////////
+
+    async participantArray(value) {
+      return this.participants.data
+      .map(obj => Object.assign({}, obj))
+      .filter(function (obj) {
+        return obj.raisenow == value;
+      });
+    },
     async getparticipants(raID) {
       await LNbits.api
         .request("GET", "/raisenow/api/v1/participants/" + raID)
         .then((response) => {
           if (response.data != null) {
-            this.participants = response.data;
+            this.participants.data = response.data;
           }
-          console.log(this.participants);
         })
         .catch((error) => {
           LNbits.utils.notifyApiError(error);
         });
     },
     async openParticipantDialog(raisenow) {
-      this.ParticpantsFormDialog.data = {
+      this.ParticipantsFormDialog.data = {
         raisenow: raisenow.id,
         wallet: raisenow.wallet,
       };
-      this.ParticpantsFormDialog.show = true;
+      this.ParticipantsFormDialog.show = true;
     },
     async updateParticipantForm(tempId, raisenow) {
-      const participant = _.findWhere(this.participants, { id: tempId });
-      this.ParticpantsFormDialog.data = {
+      const participant = _.findWhere(this.participants.data, { id: tempId });
+      this.ParticipantsFormDialog.data = {
         ...participant,
         raisenow: raisenow.id,
         wallet: raisenow.wallet,
       };
-      this.ParticpantsFormDialog.show = true;
+      this.ParticipantsFormDialog.show = true;
     },
-    async closeParticpantsFormDialog() {
-      this.ParticpantsFormDialog.show = false;
-      this.ParticpantsFormDialog.data = {};
+    async closeParticipantsFormDialog() {
+      this.ParticipantsFormDialog.show = false;
+      this.ParticipantsFormDialog.data = {};
     },
     async sendParticipantData() {
       const wallet = _.findWhere(this.g.user.wallets, {
-        id: this.ParticpantsFormDialog.data.wallet,
+        id: this.ParticipantsFormDialog.data.wallet,
       });
-      if (this.ParticpantsFormDialog.data.id) {
-        await this.updateParticipant(wallet, this.ParticpantsFormDialog.data);
+      if (this.ParticipantsFormDialog.data.id) {
+        await this.updateParticipant(wallet, this.ParticipantsFormDialog.data);
       } else {
-        await this.createParticipant(wallet, this.ParticpantsFormDialog.data);
+        await this.createParticipant(wallet, this.ParticipantsFormDialog.data);
       }
     },
     async createParticipant(wallet, data) {
       await LNbits.api
         .request("POST", "/raisenow/api/v1/participant", wallet.adminkey, data)
         .then((response) => {
-          this.participants = response.data.map(mapparticipants);
-          this.closeParticpantsFormDialog();
+          this.participants.data.push(response.data);
+          this.closeParticipantsFormDialog();
         })
         .catch((error) => {
           LNbits.utils.notifyApiError(error);
@@ -257,18 +266,18 @@ window.app = Vue.createApp({
       await LNbits.api
         .request("PUT", `/raisenow/api/v1/participant`, wallet.adminkey, data)
         .then((response) => {
-          this.participants = _.reject(this.participants, (obj) => {
+          this.participants.data = _.reject(this.participants.data, (obj) => {
             return obj.id == data.id;
           });
-          this.participants.push(response.data);
-          this.closeParticpantsFormDialog();
+          this.participants.data.push(response.data);
+          this.closeParticipantsFormDialog();
         })
         .catch((error) => {
           LNbits.utils.notifyApiError(error);
         });
     },
     async deleteAllParticipants(participantId) {
-      let raisenow = _.findWhere(this.participants, { id: participantId });
+      let raisenow = _.findWhere(this.participants.data, { id: participantId });
 
       await LNbits.utils
         .confirmDialog("Are you sure you want to delete all participants?")
@@ -293,7 +302,7 @@ window.app = Vue.createApp({
         });
     },
     async deleteParticipant(participantId) {
-      let participant = _.findWhere(this.participants, { id: participantId });
+      let participant = _.findWhere(this.participants.data, { id: participantId });
       let raisenow = _.findWhere(this.ranow, { id: participant.raisenow });
       await LNbits.utils
         .confirmDialog("Are you sure you want to delete this participant?")
@@ -306,7 +315,7 @@ window.app = Vue.createApp({
                 .adminkey,
             )
             .then(function (response) {
-              this.participants = _.reject(this.participants, function (obj) {
+              this.participants.data = _.reject(this.participants.data, function (obj) {
                 return obj.id == participantId;
               });
             })
@@ -314,12 +323,6 @@ window.app = Vue.createApp({
               LNbits.utils.notifyApiError(error);
             });
         });
-    },
-    async participantArray(partId) {
-      partiipants = this.participants.filter(function (obj) {
-        return obj.raisenow == partId;
-      });
-      console.log(partiipants);
     },
     async handleClick(id, props) {
       this.getparticipants(id);

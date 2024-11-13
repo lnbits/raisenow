@@ -128,8 +128,8 @@
                             dense
                             :rows="participantArray(props.row.id)"
                             row-key="id"
-                            :columns="particpantsTable.columns"
-                            v-model:pagination.sync="particpantsTable.pagination"
+                            :columns="participantsTable.columns"
+                            v-model:pagination="participantsTable.pagination"
                           >
                             <template v-slot:body="propss">
                               <q-tr :props="propss">
@@ -301,30 +301,30 @@
   <!--/////////////////////////////////////////////////-->
 
   <q-dialog
-    v-model="ParticpantsFormDialog.show"
+    v-model="ParticipantsFormDialog.show"
     position="top"
-    @hide="closeParticpantsFormDialog"
+    @hide="closeParticipantsFormDialog"
   >
     <q-card class="q-pa-lg q-pt-xl" style="width: 500px">
       <q-form @submit="sendParticipantData" class="q-gutter-md">
         <q-input
           filled
           dense
-          v-model.trim="ParticpantsFormDialog.data.name"
+          v-model.trim="ParticipantsFormDialog.data.name"
           label="Name *"
           placeholder="Name for your raise"
         ></q-input>
         <q-input
           filled
           dense
-          v-model.trim="ParticpantsFormDialog.data.description"
+          v-model.trim="ParticipantsFormDialog.data.description"
           label="Description (optional)"
           placeholder="optional description for your raise "
         ></q-input>
         <q-input
           filled
           dense
-          v-model.trim="ParticpantsFormDialog.data.profile_image"
+          v-model.trim="ParticipantsFormDialog.data.profile_image"
           label="Profile image for the participant (optional)"
           placeholder="Optional profile image URL 400/400px"
         ></q-input>
@@ -332,13 +332,13 @@
           filled
           dense
           emit-value
-          v-model.trim="ParticpantsFormDialog.data.lnaddress"
+          v-model.trim="ParticipantsFormDialog.data.lnaddress"
           label="LN Address where money goes *"
           hint="Avoid using fixed amount. Set a lower min amount, fees might apply."
         ></q-input>
         <div class="row q-mt-lg">
           <q-btn
-            v-if="ParticpantsFormDialog.data.id"
+            v-if="ParticipantsFormDialog.data.id"
             unelevated
             color="primary"
             type="submit"
@@ -349,7 +349,7 @@
             v-else
             unelevated
             color="primary"
-            :disable="ParticpantsFormDialog.data.name == null"
+            :disable="ParticipantsFormDialog.data.name == null"
             type="submit"
             >Create particpiant</q-btn
           >
