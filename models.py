@@ -3,20 +3,19 @@
 from typing import Optional
 
 from fastapi import Request
-from pydantic import BaseModel
-from loguru import logger
 from lnurl import encode as lnurl_encode
+from loguru import logger
+from pydantic import BaseModel
 
 # Raises - called raisenow as raises is a reserved keyword in Python
 
 
 class CreateRaiseNowData(BaseModel):
     name: str
-    wallet: Optional[str]
+    wallet: str
     description: Optional[str]
     background_image: Optional[str]
     header_image: Optional[str]
-    live_dates: Optional[str]
     total: Optional[int]
     live_dates: Optional[str]
 
@@ -24,11 +23,10 @@ class CreateRaiseNowData(BaseModel):
 class RaiseNow(BaseModel):
     id: str
     name: str
-    wallet: Optional[str]
+    wallet: str
     description: Optional[str]
     background_image: Optional[str]
     header_image: Optional[str]
-    live_dates: Optional[str]
     total: Optional[int] = 0
     live_dates: Optional[str]
 

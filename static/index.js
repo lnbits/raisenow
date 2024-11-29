@@ -204,10 +204,10 @@ window.app = Vue.createApp({
 
     async participantArray(value) {
       return this.participants.data
-      .map(obj => Object.assign({}, obj))
-      .filter(function (obj) {
-        return obj.raisenow == value;
-      });
+        .map((obj) => Object.assign({}, obj))
+        .filter(function (obj) {
+          return obj.raisenow == value;
+        });
     },
     async getparticipants(raID) {
       await LNbits.api
@@ -302,7 +302,9 @@ window.app = Vue.createApp({
         });
     },
     async deleteParticipant(participantId) {
-      let participant = _.findWhere(this.participants.data, { id: participantId });
+      let participant = _.findWhere(this.participants.data, {
+        id: participantId,
+      });
       let raisenow = _.findWhere(this.ranow, { id: participant.raisenow });
       await LNbits.utils
         .confirmDialog("Are you sure you want to delete this participant?")
@@ -315,9 +317,12 @@ window.app = Vue.createApp({
                 .adminkey,
             )
             .then(function (response) {
-              this.participants.data = _.reject(this.participants.data, function (obj) {
-                return obj.id == participantId;
-              });
+              this.participants.data = _.reject(
+                this.participants.data,
+                function (obj) {
+                  return obj.id == participantId;
+                },
+              );
             })
             .catch(function (error) {
               LNbits.utils.notifyApiError(error);

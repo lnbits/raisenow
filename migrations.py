@@ -38,6 +38,7 @@ async def m002_initial(db):
     """
     )
 
+
 async def m003_drop_lnurlpay(db):
     """
     Migration to drop lnurlpay columns from raisenow.raises and raisenow.participants.

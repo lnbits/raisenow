@@ -5,7 +5,7 @@ from lnbits.tasks import create_permanent_unique_task
 from loguru import logger
 
 from .crud import db
-from .lnurl import raisenow_lnurl_router
+from .lnurl_api import raisenow_lnurl_router
 from .tasks import wait_for_paid_invoices
 from .views import raisenow_generic_router
 from .views_api import raisenow_api_router

@@ -4,10 +4,11 @@ from math import floor
 from typing import Optional
 
 import httpx
-from lnbits import bolt11
+from bolt11 import decode as bolt11_decode
 from lnbits.core.crud import get_standalone_payment
 from lnbits.core.models import Payment
 from lnbits.core.services import fee_reserve, pay_invoice, websocket_updater
+from lnbits.core.views.api import api_lnurlscan
 from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
 from loguru import logger
@@ -27,19 +28,24 @@ async def wait_for_paid_invoices():
 async def on_invoice_paid(payment: Payment) -> None:
     if payment.extra.get("tag") != "raisenow":
         return
+    if payment.extra.get("tag") != "recordId":
+        return
     record_id = payment.extra.get("recordId")
 
     amount_msat = int(payment.amount)
     safe_amount_msat = amount_msat - fee_reserve(amount_msat)
 
-    participant_record = await get_participant(record_id)
-    logger.debug(participant_record)
+    participant_record = await get_participant(str(record_id))
+    if not participant_record:
+        return
     participant_total = int(participant_record.total or 0) + int(safe_amount_msat)
-    participant_data_to_update = {"total": participant_total}
+    participant_record.total = participant_total
 
     raisenow_record = await get_raisenow(participant_record.raisenow)
+    if not raisenow_record:
+        return
     raisenow_total = int(raisenow_record.total or 0) + int(safe_amount_msat)
-    raisenow_data_to_update = {"total": raisenow_total}
+    raisenow_record.total = raisenow_total
 
     memo = (
         f"LNbits raisenow to the raise {raisenow_record.name}"
@@ -63,16 +69,13 @@ async def on_invoice_paid(payment: Payment) -> None:
             description=memo,
             extra=extra,
         )
-    await update_participant(participant_id=record_id, **participant_data_to_update)
-    await update_raisenow(raisenow_id=raisenow_record.id, **raisenow_data_to_update)
-
+    await update_participant(participant_record)
+    await update_raisenow(raisenow_record)
     await websocket_updater(raisenow_record.id, json.dumps(extra))
+    return
 
 
 async def get_lnurl_invoice(lnaddress, wallet_id, amount_msat, memo) -> Optional[str]:
-
-    from lnbits.core.views.api import api_lnurlscan
-
     data = await api_lnurlscan(lnaddress)
     rounded_amount = floor(amount_msat / 1000) * 1000
 
@@ -103,7 +106,7 @@ async def get_lnurl_invoice(lnaddress, wallet_id, amount_msat, memo) -> Optional
         logger.error(f"{data['callback']} said: '{params.get('reason', '')}'")
         return None
 
-    invoice = bolt11.decode(params["pr"])
+    invoice = bolt11_decode(params["pr"])
 
     lnurlp_payment = await get_standalone_payment(invoice.payment_hash)
 

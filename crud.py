@@ -2,7 +2,6 @@ from typing import List, Optional, Union
 
 from lnbits.db import Database
 from lnbits.helpers import urlsafe_short_hash
-from loguru import logger
 
 from .models import CreateParticipantData, CreateRaiseNowData, Participant, RaiseNow
 
@@ -11,9 +10,9 @@ db = Database("ext_raisenow")
 
 async def create_raisenow(
     wallet_id: str, data: CreateRaiseNowData
-) -> CreateRaiseNowData:
+) -> Optional[RaiseNow]:
     raisenow_id = urlsafe_short_hash()
-    raisenow = RaiseNow(**data.dict(), wallet_id=wallet_id, id=raisenow_id)
+    raisenow = RaiseNow(**data.dict(), wallet=wallet_id, id=raisenow_id)
     await db.insert("raisenow.raises", raisenow)
     return await get_raisenow(raisenow_id)
 
@@ -50,30 +49,26 @@ async def delete_raisenow(raisenow_id: str) -> None:
 #######################################
 
 
-async def create_participant(
-    data: CreateParticipantData
-) -> CreateParticipantData:
+async def create_participant(data: CreateParticipantData) -> Optional[Participant]:
     participant_id = urlsafe_short_hash()
-    participant = Participant(
-        **data.dict(), id=participant_id
-    )
+    participant = Participant(**data.dict(), id=participant_id)
     await db.insert("raisenow.participants", participant)
     return await get_participant(participant_id)
 
 
 async def get_participant(participant_id: str) -> Optional[Participant]:
     return await db.fetchone(
-        "SELECT * FROM raisenow.participants WHERE id = :id",
-        {"id": participant_id},
-        Participant,
+        "SELECT * FROM raisenow.participants WHERE id = :id", {"id": participant_id}
     )
 
-async def get_participants(raisenow_id: str) -> List[RaiseNow]:
+
+async def get_participants(raisenow_id: str) -> List[Participant]:
     return await db.fetchall(
         "SELECT * FROM raisenow.participants WHERE raisenow = :raisenow",
         {"raisenow": raisenow_id},
-        Participant,
+        model=Participant,
     )
+
 
 async def update_participant(participant: Participant) -> Participant:
     await db.update("raisenow.participants", participant)

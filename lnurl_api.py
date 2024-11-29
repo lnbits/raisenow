@@ -1,6 +1,5 @@
 from datetime import datetime
 from http import HTTPStatus
-from typing import Optional
 
 from fastapi import APIRouter, Query, Request
 from lnbits.core.services import create_invoice
@@ -17,10 +16,14 @@ raisenow_lnurl_router: APIRouter = APIRouter()
 )
 async def api_lnurl_pay(
     request: Request,
-    record_id: Optional[str] = None,
+    record_id: str,
 ):
     record = await get_participant(record_id)
+    if not record:
+        return {"status": "ERROR", "reason": "Participant does not exist."}
     raisenow_record = await get_raisenow(record.raisenow)
+    if not raisenow_record:
+        return {"status": "ERROR", "reason": "Raise does not exist."}
 
     if raisenow_record.live_dates:
         live_dates = raisenow_record.live_dates.split(",")
@@ -52,7 +55,11 @@ async def api_lnurl_pay_cb(
     amount: int = Query(...),
 ):
     participant_record = await get_participant(record_id)
+    if not participant_record:
+        return {"status": "ERROR", "reason": "Participant does not exist."}
     raisenow_record = await get_raisenow(participant_record.raisenow)
+    if not raisenow_record:
+        return {"status": "ERROR", "reason": "Raise does not exist."}
 
     payment = await create_invoice(
         wallet_id=raisenow_record.wallet,

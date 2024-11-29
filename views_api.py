@@ -18,7 +18,7 @@ from .crud import (
     update_participant,
     update_raisenow,
 )
-from .models import CreateParticipantData, CreateRaiseNowData, RaiseNow, Participant
+from .models import CreateParticipantData, CreateRaiseNowData, Participant, RaiseNow
 
 raisenow_api_router = APIRouter()
 
@@ -28,26 +28,29 @@ raisenow_api_router = APIRouter()
 
 ## Get all the records belonging to the user
 
+
 @raisenow_api_router.get("/api/v1/ranow", status_code=HTTPStatus.OK)
 async def api_raisenows(
-    req: Request, key_info: WalletTypeInfo = Depends(require_invoice_key),
+    req: Request,
+    key_info: WalletTypeInfo = Depends(require_invoice_key),
 ):
     user = await get_user(key_info.wallet.user)
     wallet_ids = user.wallet_ids if user else []
     return [
-            {**raisenow.dict(), "lnurlpay": raisenow.lnurlpay(req)}
-            for raisenow in await get_raisenows(wallet_ids)
-        ]
+        {**raisenow.dict(), "lnurlpay": raisenow.lnurlpay(req)}
+        for raisenow in await get_raisenows(wallet_ids)
+    ]
 
 
 ## Get a single record
 
 
-@raisenow_api_router.get("/api/v1/ranow/{raisenow_id}", status_code=HTTPStatus.OK, dependencies=[Depends(require_invoice_key)])
-async def api_raisenow(
-    req: Request,
-    raisenow_id: str
-):
+@raisenow_api_router.get(
+    "/api/v1/ranow/{raisenow_id}",
+    status_code=HTTPStatus.OK,
+    dependencies=[Depends(require_invoice_key)],
+)
+async def api_raisenow(req: Request, raisenow_id: str):
     raisenow = await get_raisenow(raisenow_id)
     if not raisenow:
         raise HTTPException(
@@ -72,6 +75,7 @@ async def api_raisenow_update(
     raisenow = await update_raisenow(data)
     return {**raisenow.dict(), **{"lnurlpay": raisenow.lnurlpay(req)}}
 
+
 ## Create a new record
 
 
@@ -82,6 +86,10 @@ async def api_raisenow_create(
     key_info: WalletTypeInfo = Depends(require_admin_key),
 ):
     raisenow = await create_raisenow(wallet_id=key_info.wallet.id, data=data)
+    if not raisenow:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Could not create raisenow."
+        )
     return {**raisenow.dict(), **{"lnurlpay": raisenow.lnurlpay(req)}}
 
 
@@ -125,20 +133,20 @@ async def api_participants(req: Request, raisenow_id: str):
             status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
         )
     return [
-            {**participant.dict(), "lnurlpay": participant.lnurlpay(req)}
-            for participant in await get_participants(raisenow_id)
-        ]
+        {**participant.dict(), "lnurlpay": participant.lnurlpay(req)}
+        for participant in await get_participants(raisenow_id)
+    ]
+
 
 ## Get a single record
 
 
 @raisenow_api_router.get(
-    "/api/v1/participant/{participant_id}", status_code=HTTPStatus.OK, dependencies=[Depends(require_invoice_key)]
+    "/api/v1/participant/{participant_id}",
+    status_code=HTTPStatus.OK,
+    dependencies=[Depends(require_invoice_key)],
 )
-async def api_participant(
-    req: Request,
-    participant_id: str
-):
+async def api_participant(req: Request, participant_id: str):
     participant = await get_participant(participant_id)
     if not participant:
         raise HTTPException(
@@ -175,15 +183,21 @@ async def api_participant_update(
         )
     return {**participant.dict(), **{"lnurlpay": participant.lnurlpay(req)}}
 
+
 ## Create a new record
 
 
-@raisenow_api_router.post("/api/v1/participant", status_code=HTTPStatus.CREATED, dependencies=[Depends(require_invoice_key)])
-async def api_participant_create(
-    req: Request,
-    data: CreateParticipantData
-):
+@raisenow_api_router.post(
+    "/api/v1/participant",
+    status_code=HTTPStatus.CREATED,
+    dependencies=[Depends(require_invoice_key)],
+)
+async def api_participant_create(req: Request, data: CreateParticipantData):
     participant = await create_participant(data=data)
+    if not participant:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Could not create participant."
+        )
     return {**participant.dict(), **{"lnurlpay": participant.lnurlpay(req)}}
 
 
