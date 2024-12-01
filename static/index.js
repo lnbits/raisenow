@@ -133,23 +133,20 @@ window.app = Vue.createApp({
     },
     async deleteraisenow(tempId) {
       let raisenow = _.findWhere(this.ranow, { id: tempId });
-
+      let wallet = _.findWhere(this.g.user.wallets, { id: raisenow.wallet });
       await LNbits.utils
         .confirmDialog("Are you sure you want to delete this raisenow?")
-        .onOk(function () {
-          LNbits.api
+        .onOk(async () => {
+          await LNbits.api
             .request(
               "DELETE",
               "/raisenow/api/v1/ranow/" + tempId,
-              _.findWhere(this.g.user.wallets, { id: raisenow.wallet })
-                .adminkey,
+              wallet.adminkey,
             )
-            .then(function (response) {
-              this.ranow = _.reject(this.ranow, function (obj) {
-                return obj.id == tempId;
-              });
+            .then(async () => {
+              await this.getraisenows();
             })
-            .catch(function (error) {
+            .catch((error) => {
               LNbits.utils.notifyApiError(error);
             });
         });
@@ -202,8 +199,8 @@ window.app = Vue.createApp({
             this.participants.data.push(...response.data);
           }
         })
-        .catch((error) => {
-          LNbits.utils.notifyApiError(error);
+        .catch(() => {
+          LNbits.utils.notifyApiError("");
         });
     },
     async openParticipantDialog(raisenow) {
@@ -263,13 +260,10 @@ window.app = Vue.createApp({
     },
     async deleteAllParticipants(participantId) {
       let raisenow = _.findWhere(this.participants.data, { id: participantId });
-
+      let wallet = _.findWhere(this.g.user.wallets, { id: raisenow.wallet });
       await LNbits.utils
         .confirmDialog("Are you sure you want to delete all participants?")
         .onOk(function () {
-          let wallet = _.findWhere(this.g.user.wallets, {
-            id: raisenow.wallet,
-          });
           LNbits.api
             .request(
               "DELETE",
@@ -291,25 +285,18 @@ window.app = Vue.createApp({
         id: participantId,
       });
       let raisenow = _.findWhere(this.ranow, { id: participant.raisenow });
+      let wallet = _.findWhere(this.g.user.wallets, { id: raisenow.wallet });
       await LNbits.utils
         .confirmDialog("Are you sure you want to delete this participant?")
-        .onOk(function () {
-          LNbits.api
+        .onOk(async () => {
+          await LNbits.api
             .request(
               "DELETE",
               "/raisenow/api/v1/participant/" + participantId,
-              _.findWhere(this.g.user.wallets, { id: raisenow.wallet })
-                .adminkey,
+              wallet.adminkey,
             )
-            .then(function (response) {
-              this.participants.data = _.reject(
-                this.participants.data,
-                function (obj) {
-                  return obj.id == participantId;
-                },
-              );
-            })
-            .catch(function (error) {
+            .then(async () => {})
+            .catch((error) => {
               LNbits.utils.notifyApiError(error);
             });
         });

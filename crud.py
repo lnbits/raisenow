@@ -40,6 +40,10 @@ async def update_raisenow(raisenow: RaiseNow) -> RaiseNow:
 
 async def delete_raisenow(raisenow_id: str) -> None:
     await db.execute("DELETE FROM raisenow.raises WHERE id = :id", {"id": raisenow_id})
+    await db.execute(
+        "DELETE FROM raisenow.participants WHERE raisenow = :raisenow",
+        {"raisenow": raisenow_id},
+    )
 
 
 #######################################

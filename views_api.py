@@ -18,7 +18,7 @@ from .crud import (
     update_participant,
     update_raisenow,
 )
-from .helpers import lnurler
+from .helpers import get_pr, lnurler
 from .models import CreateParticipantData, CreateRaiseNowData, Participant, RaiseNow
 
 raisenow_api_router = APIRouter()
@@ -198,6 +198,11 @@ async def api_participant_update(
     dependencies=[Depends(require_invoice_key)],
 )
 async def api_participant_create(req: Request, data: CreateParticipantData):
+    pay_req = await get_pr(data.lnaddress)
+    if not pay_req:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail="lnaddress check failed"
+        )
     participant = await create_participant(data)
     if not participant:
         raise HTTPException(
