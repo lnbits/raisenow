@@ -163,7 +163,7 @@ async def api_participant(req: Request, participant_id: str):
 
 
 @raisenow_api_router.put(
-    "/api/v1/participant/{participant_id}", status_code=HTTPStatus.OK
+    "/api/v1/participant", status_code=HTTPStatus.OK
 )
 async def api_participant_update(
     req: Request,
