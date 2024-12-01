@@ -58,3 +58,21 @@ async def m003_drop_lnurlpay(db):
         DROP COLUMN lnurlpay;
         """
     )
+
+
+async def m004_add_lnurlpay(db):
+    """
+    Add timestamp to templates table.
+    """
+    await db.execute(
+        """
+        ALTER TABLE raisenow.participants
+        ADD COLUMN lnurlpay TEXT;
+    """
+    )
+    await db.execute(
+        """
+        ALTER TABLE raisenow.raises
+        ADD COLUMN lnurlpay TEXT;
+    """
+    )

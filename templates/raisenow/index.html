@@ -51,7 +51,7 @@
                   color="accent"
                   round
                   dense
-                  @click="handleClick(props.key, props)"
+                  @click="props.expand = !props.expand"
                   :icon="props.expand ? 'expand_less' : 'expand_more'"
                   ><q-tooltip>Participants</q-tooltip></q-btn
                 >
@@ -72,7 +72,7 @@
                   icon="launch"
                   :color="($q.dark.isActive) ? 'grey-7' : 'grey-5'"
                   type="a"
-                  :href="props.row.raisenow"
+                  :href="props.row.id"
                   target="_blank"
                   ><q-tooltip>Open public page</q-tooltip></q-btn
                 ></q-td

@@ -9,6 +9,7 @@ from lnbits.helpers import template_renderer
 from lnbits.settings import settings
 
 from .crud import get_participants, get_raisenow
+from .helpers import lnurler
 
 raisenow_generic_router: APIRouter = APIRouter()
 
@@ -25,21 +26,24 @@ async def index(request: Request, user: User = Depends(check_user_exists)):
 
 
 @raisenow_generic_router.get("/{raisenow_id}")
-async def raisenow(request: Request, raisenow_id):
+async def raisenow(req: Request, raisenow_id):
     raisenow = await get_raisenow(raisenow_id)
     if not raisenow:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="raisenow does not exist."
         )
+    raisenow.lnurlpay = lnurler(raisenow.id, "raisenow.api_lnurl_pay", req)
     participants = await get_participants(raisenow_id)
     if not participants:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="No participants found."
         )
+    for participant in participants:
+        participant.lnurlpay = lnurler(participant.id, "raisenow.api_lnurl_pay", req)
     return raisenow_renderer().TemplateResponse(
         "raisenow/raisenow.html",
         {
-            "request": request,
+            "request": req,
             "raisenow_id": raisenow_id,
             "header_image": raisenow.header_image,
             "background_image": raisenow.background_image,

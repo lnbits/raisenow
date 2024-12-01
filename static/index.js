@@ -1,19 +1,3 @@
-const mapraisenow = (obj) => {
-  obj.date = Quasar.utils.date.formatDate(
-    new Date(obj.time * 1000),
-    "YYYY-MM-DD HH:mm",
-  );
-  obj.raisenow = ["/raisenow/", obj.id].join("");
-  return obj;
-};
-const mapparticipants = (obj) => {
-  obj.date = Quasar.utils.date.formatDate(
-    new Date(obj.time * 1000),
-    "YYYY-MM-DD HH:mm",
-  );
-  obj.participants = ["/participants/", obj.id].join("");
-  return obj;
-};
 window.app = Vue.createApp({
   el: "#vue",
   mixins: [windowMixin],
@@ -82,8 +66,10 @@ window.app = Vue.createApp({
         .then((response) => {
           if (response.data != null) {
             this.ranow = response.data;
+            for (const raisenow of this.ranow) {
+              this.getparticipants(raisenow.id);
+            }
           }
-          console.log(this.ranow);
         })
         .catch((err) => {
           LNbits.utils.notifyApiError(err);
@@ -103,7 +89,6 @@ window.app = Vue.createApp({
       if (this.RaiseFormDialog.data.id) {
         this.updateraisenow(wallet, this.RaiseFormDialog.data);
       } else {
-        console.log(this.RaiseFormDialog.data);
         this.createraisenow(wallet, this.RaiseFormDialog.data);
       }
     },
@@ -119,7 +104,6 @@ window.app = Vue.createApp({
         };
         this.RaiseFormDialog.advanced_time = true;
       }
-      console.log(this.RaiseFormDialog.data);
       this.RaiseFormDialog.show = true;
     },
     async createraisenow(wallet, data) {
@@ -141,7 +125,6 @@ window.app = Vue.createApp({
             return obj.id == data.id;
           });
           this.ranow.push(response.data);
-          console.log(this.ranow);
           this.closeRaiseFormDialog();
         })
         .catch((error) => {
@@ -202,19 +185,21 @@ window.app = Vue.createApp({
     },
     ///////////////// Participants ///////////////////
 
-    async participantArray(value) {
-      return this.participants.data
+    participantArray(value) {
+      const participants = this.participants.data
         .map((obj) => Object.assign({}, obj))
         .filter(function (obj) {
           return obj.raisenow == value;
         });
+
+      return participants;
     },
     async getparticipants(raID) {
       await LNbits.api
         .request("GET", "/raisenow/api/v1/participants/" + raID)
         .then((response) => {
           if (response.data != null) {
-            this.participants.data = response.data;
+            this.participants.data.push(...response.data);
           }
         })
         .catch((error) => {
@@ -328,10 +313,6 @@ window.app = Vue.createApp({
               LNbits.utils.notifyApiError(error);
             });
         });
-    },
-    async handleClick(id, props) {
-      this.getparticipants(id);
-      props.expand = !props.expand;
     },
     async makeItRain() {
       document.getElementById("vue").disabled = true;
