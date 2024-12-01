@@ -1,57 +1,49 @@
+import json
 from http import HTTPStatus
 
-from fastapi import Depends, Request
-from fastapi.templating import Jinja2Templates
-from starlette.exceptions import HTTPException
-from starlette.responses import HTMLResponse
-
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse
 from lnbits.core.models import User
 from lnbits.decorators import check_user_exists
+from lnbits.helpers import template_renderer
 from lnbits.settings import settings
 
-from . import raisenow_ext, raisenow_renderer
-from .crud import get_raisenow, get_participants
-from loguru import logger
-import json
-from fastapi.responses import JSONResponse
+from .crud import get_participants, get_raisenow
+from .helpers import lnurler
 
-ranow = Jinja2Templates(directory="ranow")
+raisenow_generic_router: APIRouter = APIRouter()
 
 
-#######################################
-##### ADD YOUR PAGE ENDPOINTS HERE ####
-#######################################
+def raisenow_renderer():
+    return template_renderer(["raisenow/templates"])
 
 
-# Backend admin page
-
-
-@raisenow_ext.get("/", response_class=HTMLResponse)
+@raisenow_generic_router.get("/", response_class=HTMLResponse)
 async def index(request: Request, user: User = Depends(check_user_exists)):
     return raisenow_renderer().TemplateResponse(
-        "raisenow/index.html", {"request": request, "user": user.dict()}
+        "raisenow/index.html", {"request": request, "user": user.json()}
     )
 
 
-# Frontend shareable page
-
-
-@raisenow_ext.get("/{raisenow_id}")
-async def raisenow(request: Request, raisenow_id):
-    raisenow = await get_raisenow(raisenow_id, request)
+@raisenow_generic_router.get("/{raisenow_id}")
+async def raisenow(req: Request, raisenow_id):
+    raisenow = await get_raisenow(raisenow_id)
     if not raisenow:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="raisenow does not exist."
         )
-    participants = await get_participants(raisenow_id, request)
+    raisenow.lnurlpay = lnurler(raisenow.id, "raisenow.api_lnurl_pay", req)
+    participants = await get_participants(raisenow_id)
     if not participants:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="No participants found."
         )
+    for participant in participants:
+        participant.lnurlpay = lnurler(participant.id, "raisenow.api_lnurl_pay", req)
     return raisenow_renderer().TemplateResponse(
         "raisenow/raisenow.html",
         {
-            "request": request,
+            "request": req,
             "raisenow_id": raisenow_id,
             "header_image": raisenow.header_image,
             "background_image": raisenow.background_image,
@@ -62,10 +54,7 @@ async def raisenow(request: Request, raisenow_id):
     )
 
 
-# Manifest for public page, customise or remove manifest completely
-
-
-@raisenow_ext.get("/manifest/{raisenow_id}.webmanifest")
+@raisenow_generic_router.get("/manifest/{raisenow_id}.webmanifest")
 async def manifest(raisenow_id: str):
     raisenow = await get_raisenow(raisenow_id)
     if not raisenow:
@@ -78,9 +67,11 @@ async def manifest(raisenow_id: str):
         "name": raisenow.name + " - " + settings.lnbits_site_title,
         "icons": [
             {
-                "src": settings.lnbits_custom_logo
-                if settings.lnbits_custom_logo
-                else "https://cdn.jsdelivr.net/gh/lnbits/lnbits@0.3.0/docs/logos/lnbits.png",
+                "src": (
+                    settings.lnbits_custom_logo
+                    if settings.lnbits_custom_logo
+                    else "https://cdn.jsdelivr.net/gh/lnbits/lnbits@0.3.0/docs/logos/lnbits.png"
+                ),
                 "type": "image/png",
                 "sizes": "900x900",
             }

@@ -1,194 +1,244 @@
-{% extends "public.html" %}
-{% block page %}
-<div :style="'background-image:url('+background_image+'); background-size: cover; min-height: 100vh'" class="q-pa-none">
+{% extends "public.html" %} {% block page %}
 
-  <div style="display: flex;  max-height: 100px;" class="flex-center q-ma-sm">
-    <img :src="header_image" alt="Header Image" style="max-height: 100px; margin-right: 20px;">
-
+<div
+  :style="'background-image:url('+background_image+'); background-size: cover; min-height: 100vh'"
+  class="q-pa-none"
+>
+  <div style="display: flex; max-height: 100px" class="flex-center q-ma-sm">
+    <img
+      :src="header_image"
+      alt="Header Image"
+      style="max-height: 100px; margin-right: 20px"
+    />
   </div>
-  <div class="row q-col-gutter-md justify-center q-mt-md">{% raw %}
-    <div v-for="participant in participants" :key="participant.id"
-      :class="`col-${columnCount} q-ml-${sizes[spaceCount]}`">
-      <q-card @click="copyText(participant.lnurlpay)" class="q-pa-md cursor-pointer"
-        :class="participant.received_payment ? 'bg-secondary ': ''">
-
+  <div class="row q-col-gutter-md justify-center q-mt-md">
+    <div
+      v-for="participant in participants"
+      :key="participant.id"
+      :class="`col-${columnCount} q-ml-${sizes[spaceCount]}`"
+    >
+      <q-card
+        @click="copyText(participant.lnurlpay)"
+        class="q-pa-md cursor-pointer"
+        :class="participant.received_payment ? 'bg-secondary' : ''"
+      >
         <div class="row">
           <div :class="`col-${13 - columnCount}`">
             <q-avatar>
-              <img :src="participant.profile_image || '/raisenow/static/image/raisenow.png'">
+              <img
+                :src="participant.profile_image || '/raisenow/static/image/raisenow.png'"
+              />
             </q-avatar>
           </div>
-          <div :class="`col-${13-columnCount}`">
+          <div :class="`col-${13 - columnCount}`">
             <q-item-section>
-              <h5 class="q-ma-none">{{ participant.name }}</h5 class="q-ma-none">
-              <q-item-label>{{ participant.description }}</q-item-label>
+              <h5 class="q-ma-none" v-text="participant.name"></h5>
+              <q-item-label v-text="participant.description"></q-item-label>
             </q-item-section>
           </div>
         </div>
         <div class="text-center q-mt-md q-pb-md">
           <q-responsive :ratio="1">
-            <qrcode :value="participant.lnurlpay" :options="{width: 200}" class="rounded-borders"></qrcode>
+            <lnbits-qrcode
+              :value="participant.lnurlpay"
+              :options="{width: 200}"
+              class="rounded-borders"
+            ></lnbits-qrcode>
           </q-responsive>
         </div>
-
         <div class="row">
-
           <div class="col-12">
             <div class="float-right q-mr-md">
-              <span>{{ participant.total / 1000 || '0' }}</span>
+              <span v-text="participant.total / 1000 || '0'"></span>
               <span>sats</span>
             </div>
           </div>
-
-
-
         </div>
-
       </q-card>
     </div>
+
+    <!-- Adjust column count -->
     <q-page-sticky position="bottom-right" :offset="[18, 18]">
       <q-btn @click="resizeColumns(true)" fab icon="add" color="secondary" />
     </q-page-sticky>
     <q-page-sticky position="bottom-right" :offset="[80, 18]">
-      <q-btn @click="resizeColumns(false)" fab icon="remove" color="secondary" />
+      <q-btn
+        @click="resizeColumns(false)"
+        fab
+        icon="remove"
+        color="secondary"
+      />
     </q-page-sticky>
 
+    <!-- Adjust spacing -->
     <q-page-sticky position="bottom-left" :offset="[18, 18]">
-      <q-btn @click="resizeSpace(true)" fab icon="chevron_left" color="secondary" />
+      <q-btn
+        @click="resizeSpace(true)"
+        fab
+        icon="chevron_left"
+        color="secondary"
+      />
     </q-page-sticky>
     <q-page-sticky position="bottom-left" :offset="[80, 18]">
-      <q-btn @click="resizeSpace(false)" fab icon="chevron_right" color="secondary" />
+      <q-btn
+        @click="resizeSpace(false)"
+        fab
+        icon="chevron_right"
+        color="secondary"
+      />
     </q-page-sticky>
-    {% endraw %}
   </div>
 </div>
-{% endblock %}
-{% block style %}
-<style>
-
-.q-page {
-  padding: 0px !important;
-
-}
-</style>  
-{% endblock %}
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
-  Vue.component(VueQrcode.name, VueQrcode)
-
-  new Vue({
-    el: '#vue',
+  window.app = Vue.createApp({
+    el: "#vue",
     mixins: [windowMixin],
-    data: function () {
+    data() {
       return {
-        raise_lnurlpay: '{{ lnurlpay }}',
-        raisenow_id: '{{ raisenow_id }}',
-        header_image: '{{ header_image }}',
-        background_image: '{{ background_image }}',
-        participants: '{{ participants | safe }}',
+        raise_lnurlpay: "{{ lnurlpay }}",
+        raisenow_id: "{{ raisenow_id }}",
+        header_image: "{{ header_image }}",
+        background_image: "{{ background_image }}",
+        participants: {{ participants | tojson | safe }},
         columnCount: 3,
         spaceCount: 3,
-        sizes: ['none', 'xs', 'sm', 'md', 'lg', 'xl']
-      }
+        sizes: ["none", "xs", "sm", "md", "lg", "xl"],
+      };
     },
-    created: function () {
-      this.participants = JSON.parse(this.participants)
-      // Will trigger payment reaction when payment received, sent from tasks.py
+    created() {
+      // Parse participants data safely
+      try {
+        this.participants = JSON.parse(this.participants);
+      } catch (error) {
+        console.error("Error parsing participants:", error);
+        this.participants = [];
+      }
 
-      this.startWebsocketLister()
-      this.columnCount = +(this.$q.localStorage.getItem(`lnbits.extensions.raisenow.${this.raisenow_id}.columnCount`) || '3')
-      this.spaceCount = +(this.$q.localStorage.getItem(`lnbits.extensions.raisenow.${this.raisenow_id}.spaceCount`) || '3')
+      // Load saved settings
+      this.columnCount = Number(
+        this.$q.localStorage.getItem(
+          `lnbits.extensions.raisenow.${this.raisenow_id}.columnCount`
+        ) || 3
+      );
 
-      // console.log("### creted", this.columnCount, this.spaceCount)
-      // setTimeout(() => {
+      this.spaceCount = Number(
+        this.$q.localStorage.getItem(
+          `lnbits.extensions.raisenow.${this.raisenow_id}.spaceCount`
+        ) || 3
+      );
 
-      //   this.handleNewPayment({
-      //     participant_id: 'dJQrdGnrYBwBixFFypgJJg',
-      //     name: "SOMEEEE",
-      //     amount: 111
-      //   })
-      // }, 5000)
-
+      // Start WebSocket listener
+      this.startWebSocketListener();
     },
     methods: {
+      // Copy text to clipboard
       copyText(text) {
         navigator.clipboard.writeText(text).then(() => {
           this.$q.notify({
-            message: 'Linl copied to clipboard',
-            color: 'green',
-            timeout: 1000
-          })
-        })
+            message: "Link copied to clipboard",
+            color: "green",
+            timeout: 1000,
+          });
+        });
       },
+
+      // Adjust column count
       resizeColumns(increase = false) {
-        if (increase) {
-          this.columnCount = Math.min(12, this.columnCount + 1)
-        } else {
-          this.columnCount = Math.max(1, this.columnCount - 1)
-        }
+        this.columnCount = increase
+          ? Math.min(12, this.columnCount + 1)
+          : Math.max(1, this.columnCount - 1);
+
         this.$q.localStorage.set(
           `lnbits.extensions.raisenow.${this.raisenow_id}.columnCount`,
           this.columnCount
-        )
+        );
       },
+
+      // Adjust spacing size
       resizeSpace(increase = false) {
-        if (increase) {
-          this.spaceCount = Math.min(this.sizes.length - 1, this.spaceCount + 1)
-        } else {
-          this.spaceCount = Math.max(0, this.spaceCount - 1)
-        }
+        this.spaceCount = increase
+          ? Math.min(this.sizes.length - 1, this.spaceCount + 1)
+          : Math.max(0, this.spaceCount - 1);
+
         this.$q.localStorage.set(
           `lnbits.extensions.raisenow.${this.raisenow_id}.spaceCount`,
           this.spaceCount
-        )
+        );
       },
-      startWebsocketLister() {
-        const url = new URL(window.location)
-        url.protocol = url.protocol === 'https:' ? 'wss' : 'ws'
-        url.pathname = `/api/v1/ws/${this.raisenow_id}`
-        const ws = new WebSocket(url)
-        ws.addEventListener('message', async ({ data }) => {
-          const extra = JSON.parse(data)
-          this.handleNewPayment(extra)
-        })
-      },
-      handleNewPayment(extra) {
+
+      // Start WebSocket listener for new payments
+      startWebSocketListener() {
         try {
-          const index = this.participants.findIndex(p => p.id === extra.participant_id)
-          if (index === -1) {
-            return
-          }
-          this.$q.notify({
-            type: 'positive',
-            message: `${extra.participant_name} received ${extra.amount} sats.`,
-            timeout: 2000,
-          })
-          this.notifyNewPayment(index)
-          setTimeout(() => {
-            window.location.reload()
-          }, 2000)
+          const url = new URL(window.location);
+          url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+          url.pathname = `/api/v1/ws/${this.raisenow_id}`;
+          const ws = new WebSocket(url);
+
+          ws.addEventListener("message", ({ data }) => {
+            try {
+              const extra = JSON.parse(data);
+              this.handleNewPayment(extra);
+            } catch (error) {
+              console.error("Error parsing WebSocket message:", error);
+            }
+          });
+
+          ws.addEventListener("error", (error) => {
+            console.error("WebSocket error:", error);
+          });
         } catch (error) {
-          console.warn(error)
+          console.error("Error starting WebSocket listener:", error);
         }
       },
+
+      // Handle new payment notification
+      handleNewPayment(extra) {
+        const index = this.participants.findIndex(
+          (p) => p.id === extra.participant_id
+        );
+        if (index === -1) {
+          console.warn("Participant not found for ID:", extra.participant_id);
+          return;
+        }
+
+        this.$q.notify({
+          type: "positive",
+          message: `${extra.participant_name} received ${extra.amount} sats.`,
+          timeout: 2000,
+        });
+
+        this.notifyNewPayment(index);
+
+        // Reload after 2 seconds to reflect changes
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      },
+
+      // Highlight participant and trigger animation
       notifyNewPayment(index) {
         try {
-
           const p = this.participants;
 
-          setTimeout(() => {
-            this.participants = p
-            this.participants[index].received_payment = true
-          })
-          this.participants = []
-          const reaction = localStorage.getItem('lnbits.reactions')
-          const reactionFn = reaction ? reaction.split('|')[1] : 'confettiStars'
-          window[reactionFn]()
+          // Trigger visual change
+          this.participants[index].received_payment = true;
+          this.participants = [...p]; // Ensure Vue reactivity
+
+          // Trigger reaction animation
+          const reaction = localStorage.getItem("lnbits.reactions");
+          const reactionFn = reaction ? reaction.split("|")[1] : "confettiStars";
+
+          if (typeof window[reactionFn] === "function") {
+            window[reactionFn]();
+          } else {
+            console.warn(`Reaction function "${reactionFn}" not found.`);
+          }
         } catch (error) {
-          console.warn(error)
+          console.error("Error in notifyNewPayment:", error);
         }
-      }
-    }
-  })
+      },
+    },
+  });
 </script>
 {% endblock %}

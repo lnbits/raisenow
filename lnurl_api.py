@@ -1,54 +1,41 @@
-# Maybe your extension needs some LNURL stuff.
-# Here is a very simple example of how to do it.
-# Feel free to delete this file if you don't need it.
-
-from http import HTTPStatus
-from fastapi import Depends, Query, Request
-from . import raisenow_ext
-from .crud import get_raisenow, get_participant
-from lnbits.core.services import create_invoice, pay_invoice
-from loguru import logger
-from typing import Optional
-from .crud import update_raisenow
-from .models import RaiseNow
-import shortuuid
 from datetime import datetime
+from http import HTTPStatus
 
-#################################################
-########### A very simple LNURLpay ##############
-# https://github.com/lnurl/luds/blob/luds/06.md #
-#################################################
-#################################################
+from fastapi import APIRouter, Query, Request
+from lnbits.core.services import create_invoice
 
-# Currently any any amount can be paid, but in the future this will be configurable.
+from .crud import get_participant, get_raisenow
 
-@raisenow_ext.get(
+raisenow_lnurl_router: APIRouter = APIRouter()
+
+
+@raisenow_lnurl_router.get(
     "/api/v1/lnurl/pay/{record_id}",
     status_code=HTTPStatus.OK,
     name="raisenow.api_lnurl_pay",
 )
 async def api_lnurl_pay(
     request: Request,
-    record_id: Optional[str] = None,
+    record_id: str,
 ):
     record = await get_participant(record_id)
+    if not record:
+        return {"status": "ERROR", "reason": "Participant does not exist."}
     raisenow_record = await get_raisenow(record.raisenow)
+    if not raisenow_record:
+        return {"status": "ERROR", "reason": "Raise does not exist."}
 
     if raisenow_record.live_dates:
-        live_dates = raisenow_record.live_dates.split(',')
+        live_dates = raisenow_record.live_dates.split(",")
         start_date = datetime.strptime(live_dates[0], "%Y/%m/%d").date()
         end_date = datetime.strptime(live_dates[1], "%Y/%m/%d").date()
-
         current_date = datetime.now().date()
-
         if not start_date <= current_date <= end_date:
             return {"status": "ERROR", "reason": "The raise is not live."}
 
     return {
         "callback": str(
-            request.url_for(
-                "raisenow.api_lnurl_pay_callback", record_id=record_id
-            )
+            request.url_for("raisenow.api_lnurl_pay_callback", record_id=record_id)
         ),
         "maxSendable": 1000000000,
         "minSendable": 10000,
@@ -57,7 +44,7 @@ async def api_lnurl_pay(
     }
 
 
-@raisenow_ext.get(
+@raisenow_lnurl_router.get(
     "/api/v1/lnurl/pay/cb/{record_id}",
     status_code=HTTPStatus.OK,
     name="raisenow.api_lnurl_pay_callback",
@@ -68,9 +55,13 @@ async def api_lnurl_pay_cb(
     amount: int = Query(...),
 ):
     participant_record = await get_participant(record_id)
+    if not participant_record:
+        return {"status": "ERROR", "reason": "Participant does not exist."}
     raisenow_record = await get_raisenow(participant_record.raisenow)
+    if not raisenow_record:
+        return {"status": "ERROR", "reason": "Raise does not exist."}
 
-    payment_hash, payment_request = await create_invoice(
+    payment = await create_invoice(
         wallet_id=raisenow_record.wallet,
         amount=int(amount / 1000),
         memo=participant_record.name,
@@ -82,7 +73,10 @@ async def api_lnurl_pay_cb(
         },
     )
     return {
-        "pr": payment_request,
+        "pr": payment.bolt11,
         "routes": [],
-        "successAction": {"tag": "message", "message": f"Paid {participant_record.name}"},
+        "successAction": {
+            "tag": "message",
+            "message": f"Paid {participant_record.name}",
+        },
     }

@@ -1,39 +1,27 @@
 from http import HTTPStatus
-import json
 
-import httpx
-from fastapi import Depends, Query, Request
-from lnurl import decode as decode_lnurl
-from loguru import logger
-from starlette.exceptions import HTTPException
-
+from fastapi import APIRouter, Depends, HTTPException, Request
 from lnbits.core.crud import get_user
-from lnbits.core.models import Payment
-from lnbits.core.services import create_invoice
-from lnbits.core.views.api import api_payment
-from lnbits.decorators import (
-    WalletTypeInfo,
-    check_admin,
-    get_key_type,
-    require_admin_key,
-    require_invoice_key,
-)
+from lnbits.core.models import WalletTypeInfo
+from lnbits.decorators import require_admin_key, require_invoice_key
+from loguru import logger
 
-from . import raisenow_ext
 from .crud import (
-    create_raisenow,
-    update_raisenow,
-    delete_raisenow,
-    get_raisenow,
-    get_raisenows,
     create_participant,
-    update_participant,
+    create_raisenow,
     delete_participant,
+    delete_raisenow,
     get_participant,
     get_participants,
+    get_raisenow,
+    get_raisenows,
+    update_participant,
+    update_raisenow,
 )
-from .models import CreateRaiseNowData, CreateParticipantData, Participant, RaiseNow
+from .helpers import get_pr, lnurler
+from .models import CreateParticipantData, CreateRaiseNowData, Participant, RaiseNow
 
+raisenow_api_router = APIRouter()
 
 #######################################
 ############### RAISES ################
@@ -41,84 +29,80 @@ from .models import CreateRaiseNowData, CreateParticipantData, Participant, Rais
 
 ## Get all the records belonging to the user
 
-@raisenow_ext.get("/api/v1/ranow", status_code=HTTPStatus.OK)
+
+@raisenow_api_router.get("/api/v1/ranow", status_code=HTTPStatus.OK)
 async def api_raisenows(
     req: Request,
-    all_wallets: bool = Query(False),
-    wallet: WalletTypeInfo = Depends(get_key_type),
+    key_info: WalletTypeInfo = Depends(require_invoice_key),
 ):
-    wallet_ids = [wallet.wallet.id]
-    if all_wallets:
-        user = await get_user(wallet.wallet.user)
-        wallet_ids = user.wallet_ids if user else []
-    return [
-        raisenow.dict() for raisenow in await get_raisenows(wallet_ids, req)
-    ]
+    user = await get_user(key_info.wallet.user)
+    wallet_ids = user.wallet_ids if user else []
+    raisenows = await get_raisenows(wallet_ids)
+    for raisenow in raisenows:
+        raisenow.lnurlpay = lnurler(raisenow.id, "raisenow.api_lnurl_pay", req)
+    return raisenows
 
 
 ## Get a single record
 
 
-@raisenow_ext.get("/api/v1/ranow/{raisenow_id}", status_code=HTTPStatus.OK)
-async def api_raisenow(
-    req: Request, raisenow_id: str, WalletTypeInfo=Depends(get_key_type)
-):
-    raisenow = await get_raisenow(raisenow_id, req)
+@raisenow_api_router.get(
+    "/api/v1/ranow/{raisenow_id}",
+    status_code=HTTPStatus.OK,
+    dependencies=[Depends(require_invoice_key)],
+)
+async def api_raisenow(req: Request, raisenow_id: str):
+    raisenow = await get_raisenow(raisenow_id)
     if not raisenow:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="raisenow does not exist."
         )
-    return raisenow.dict()
+    raisenow.lnurlpay = lnurler(raisenow.id, "raisenow.api_lnurl_pay", req)
+    return raisenow
 
 
 ## update a record
 
 
-@raisenow_ext.put("/api/v1/ranow/{raisenow_id}")
+@raisenow_api_router.put("/api/v1/ranow", status_code=HTTPStatus.OK)
 async def api_raisenow_update(
     req: Request,
-    data: CreateRaiseNowData,
-    raisenow_id: str,
-    wallet: WalletTypeInfo = Depends(get_key_type),
+    data: RaiseNow,
+    key_info: WalletTypeInfo = Depends(require_invoice_key),
 ):
-    if not raisenow_id:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="raisenow does not exist."
-        )
-    raisenow = await get_raisenow(raisenow_id, req)
-    assert raisenow, "raisenow couldn't be retrieved"
-
-    if wallet.wallet.id != raisenow.wallet:
+    if key_info.wallet.id != data.wallet:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN, detail="Not your raisenow."
         )
-    raisenow = await update_raisenow(
-        raisenow_id=raisenow_id, **data.dict(), req=req
-    )
-    return raisenow.dict()
+    raisenow = await update_raisenow(data)
+    raisenow.lnurlpay = lnurler(raisenow.id, "raisenow.api_lnurl_pay", req)
+    return raisenow
 
 
 ## Create a new record
 
 
-@raisenow_ext.post("/api/v1/ranow", status_code=HTTPStatus.CREATED)
-async def api_raisenow_create(
-    req: Request,
-    data: CreateRaiseNowData,
-    wallet: WalletTypeInfo = Depends(require_admin_key),
-):
-    raisenow = await create_raisenow(
-        wallet_id=wallet.wallet.id, data=data, req=req
-    )
-    return raisenow.dict()
+@raisenow_api_router.post(
+    "/api/v1/ranow",
+    status_code=HTTPStatus.CREATED,
+    dependencies=[Depends(require_invoice_key)],
+)
+async def api_raisenow_create(req: Request, data: CreateRaiseNowData):
+    raisenow = await create_raisenow(data)
+    if not raisenow:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Could not create raisenow."
+        )
+    raisenow.lnurlpay = lnurler(raisenow.id, "raisenow.api_lnurl_pay", req)
+    return raisenow
 
 
 ## Delete a record
 
 
-@raisenow_ext.delete("/api/v1/ranow/{raisenow_id}")
+@raisenow_api_router.delete("/api/v1/ranow/{raisenow_id}", status_code=HTTPStatus.OK)
 async def api_raisenow_delete(
-    raisenow_id: str, wallet: WalletTypeInfo = Depends(require_admin_key)
+    raisenow_id: str, key_info: WalletTypeInfo = Depends(require_admin_key)
 ):
     raisenow = await get_raisenow(raisenow_id)
 
@@ -127,7 +111,7 @@ async def api_raisenow_delete(
             status_code=HTTPStatus.NOT_FOUND, detail="raisenow does not exist."
         )
 
-    if raisenow.wallet != wallet.wallet.id:
+    if raisenow.wallet != key_info.wallet.id:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN, detail="Not your raisenow."
         )
@@ -142,85 +126,101 @@ async def api_raisenow_delete(
 
 ## Get all the records belonging to the user
 
-@raisenow_ext.get("/api/v1/participants/{raisenow_id}", status_code=HTTPStatus.OK)
-async def api_participants(
-    req: Request, raisenow_id: str
-):
-    participants = await get_participants(raisenow_id, req)
+
+@raisenow_api_router.get(
+    "/api/v1/participants/{raisenow_id}", status_code=HTTPStatus.OK
+)
+async def api_participants(req: Request, raisenow_id: str):
+    participants = await get_participants(raisenow_id)
     if not participants:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
         )
-    return [
-        participant.dict() for participant in await get_participants(raisenow_id, req)
-    ]
+    for participant in participants:
+        participant.lnurlpay = lnurler(participant.id, "raisenow.api_lnurl_pay", req)
+    return participants
+
 
 ## Get a single record
 
 
-@raisenow_ext.get("/api/v1/participant/{participant_id}", status_code=HTTPStatus.OK)
-async def api_participant(
-    req: Request, raisenow_id: str, WalletTypeInfo=Depends(get_key_type)
-):
-    participant = await get_participant(participant_id, req)
+@raisenow_api_router.get(
+    "/api/v1/participant/{participant_id}",
+    status_code=HTTPStatus.OK,
+    dependencies=[Depends(require_invoice_key)],
+)
+async def api_participant(req: Request, participant_id: str):
+    participant = await get_participant(participant_id)
     if not participant:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
         )
-    return participant.dict()
+    participant.lnurlpay = lnurler(participant.id, "raisenow.api_lnurl_pay", req)
+    return participant
 
 
 ## update a record
 
 
-@raisenow_ext.put("/api/v1/participant/{participant_id}")
+@raisenow_api_router.put(
+    "/api/v1/participant/{participant_id}", status_code=HTTPStatus.OK
+)
 async def api_participant_update(
     req: Request,
-    data: CreateParticipantData,
-    participant_id: str,
-    wallet: WalletTypeInfo = Depends(get_key_type),
+    data: Participant,
+    key_info: WalletTypeInfo = Depends(require_invoice_key),
 ):
-    if not participant_id:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
-        )
-    participant = await get_participant(participant_id, req)
+    participant = await get_participant(data.id)
     assert participant, "participant couldn't be retrieved"
 
-    raisenow = await get_raisenow(participant.raisenow, req)
+    raisenow = await get_raisenow(participant.raisenow)
     assert raisenow, "raisenow couldn't be retrieved"
 
-    if wallet.wallet.id != raisenow.wallet:
+    if key_info.wallet.id != raisenow.wallet:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN, detail="Not your raisenow."
         )
-    logger.debug(data.dict())
-    participant = await update_participant(
-        participant_id=participant_id, **data.dict(), req=req
-    )
-    return participant.dict()
+    participant = await update_participant(data)
+    if not participant:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Could not update participants."
+        )
+    participant.lnurlpay = lnurler(participant.id, "raisenow.api_lnurl_pay", req)
+    return participant
 
 
 ## Create a new record
 
-@raisenow_ext.post("/api/v1/participant", status_code=HTTPStatus.CREATED)
-async def api_participant_create(
-    req: Request,
-    data: CreateParticipantData,
-    wallet: WalletTypeInfo = Depends(require_admin_key),
-):
-    participant = await create_participant(
-        wallet_id=wallet.wallet.id, data=data, req=req
-    )
-    return participant.dict()
+
+@raisenow_api_router.post(
+    "/api/v1/participant",
+    status_code=HTTPStatus.CREATED,
+    dependencies=[Depends(require_invoice_key)],
+)
+async def api_participant_create(req: Request, data: CreateParticipantData):
+    pay_req = await get_pr(data.lnaddress)
+    if not pay_req:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail="lnaddress check failed"
+        )
+    participant = await create_participant(data)
+    if not participant:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Could not create participant."
+        )
+    participant.lnurlpay = lnurler(participant.id, "raisenow.api_lnurl_pay", req)
+    return participant
 
 
 ## Delete a record
 
 
-@raisenow_ext.delete("/api/v1/participant/{participant_id}")
+@raisenow_api_router.delete(
+    "/api/v1/participant/{participant_id}", status_code=HTTPStatus.OK
+)
 async def api_participant_delete(
-    req: Request, participant_id: str, wallet: WalletTypeInfo = Depends(require_admin_key)
+    participant_id: str,
+    key_info: WalletTypeInfo = Depends(require_admin_key),
 ):
     participant = await get_participant(participant_id)
     logger.debug(participant)
@@ -228,10 +228,10 @@ async def api_participant_delete(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="participant does not exist."
         )
-    raisenow = await get_raisenow(participant.raisenow, req)
+    raisenow = await get_raisenow(participant.raisenow)
     assert raisenow, "raisenow couldn't be retrieved"
 
-    if raisenow.wallet != wallet.wallet.id:
+    if raisenow.wallet != key_info.wallet.id:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN, detail="Not your raisenow."
         )
