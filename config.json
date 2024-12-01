@@ -2,7 +2,7 @@
   "name": "RaiseNow",
   "short_description": "Raise funds for multiple participants",
   "tile": "/raisenow/static/image/raisenow.png",
-  "min_lnbits_version": "0.12.6",
+  "min_lnbits_version": "1.0.0",
   "contributors": [
     {
       "name": "Ben Arc",
