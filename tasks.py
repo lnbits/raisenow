@@ -9,7 +9,6 @@ from lnbits.core.crud import get_standalone_payment
 from lnbits.core.models import Payment
 from lnbits.core.services import fee_reserve, pay_invoice, websocket_updater
 from lnbits.core.views.api import api_lnurlscan
-from lnbits.helpers import get_current_extension_name
 from lnbits.tasks import register_invoice_listener
 from loguru import logger
 
@@ -18,7 +17,7 @@ from .crud import get_participant, get_raisenow, update_participant, update_rais
 
 async def wait_for_paid_invoices():
     invoice_queue = asyncio.Queue()
-    register_invoice_listener(invoice_queue, get_current_extension_name())
+    register_invoice_listener(invoice_queue, "ext_raisenow_invoice_listener")
 
     while True:
         payment = await invoice_queue.get()
@@ -28,10 +27,9 @@ async def wait_for_paid_invoices():
 async def on_invoice_paid(payment: Payment) -> None:
     if payment.extra.get("tag") != "raisenow":
         return
-    if payment.extra.get("tag") != "recordId":
+    if not payment.extra.get("recordId"):
         return
     record_id = payment.extra.get("recordId")
-
     amount_msat = int(payment.amount)
     safe_amount_msat = amount_msat - fee_reserve(amount_msat)
 

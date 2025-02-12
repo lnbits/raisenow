@@ -1,7 +1,6 @@
 import asyncio
 
 from fastapi import APIRouter
-from lnbits.tasks import create_permanent_unique_task
 from loguru import logger
 
 from .crud import db
@@ -10,18 +9,16 @@ from .tasks import wait_for_paid_invoices
 from .views import raisenow_generic_router
 from .views_api import raisenow_api_router
 
-raisenow_ext: APIRouter = APIRouter(prefix="/raisenow", tags=["raisenow"])
-raisenow_ext.include_router(raisenow_generic_router)
-raisenow_ext.include_router(raisenow_api_router)
-raisenow_ext.include_router(raisenow_lnurl_router)
-
 raisenow_static_files = [
     {
         "path": "/raisenow/static",
         "name": "raisenow_static",
     }
 ]
-
+raisenow_ext: APIRouter = APIRouter(prefix="/raisenow", tags=["raisenow"])
+raisenow_ext.include_router(raisenow_generic_router)
+raisenow_ext.include_router(raisenow_api_router)
+raisenow_ext.include_router(raisenow_lnurl_router)
 
 scheduled_tasks: list[asyncio.Task] = []
 
@@ -35,8 +32,16 @@ def raisenow_stop():
 
 
 def raisenow_start():
+    from lnbits.tasks import create_permanent_unique_task
+
     task = create_permanent_unique_task("ext_raisenow", wait_for_paid_invoices)
     scheduled_tasks.append(task)
 
 
-__all__ = ["db", "raisenow_ext", "raisenow_static_files"]
+__all__ = [
+    "db",
+    "raisenow_ext",
+    "raisenow_static_files",
+    "raisenow_stop",
+    "raisenow_start",
+]
