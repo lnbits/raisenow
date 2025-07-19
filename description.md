@@ -2,7 +2,7 @@ Time based fundraising platform for multiple participants in an event, includes 
 
 Could be used for:
 
-- Sporting events
-- Rasing money for projects
+-   Sporting events
+-   Rasing money for projects
 
 Original idea by Chris Moss

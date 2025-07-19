@@ -1,20 +1,27 @@
-import httpx
 from fastapi import Request
-from lnbits.core.views.api import api_lnurlscan
+from lnbits.settings import settings
+from lnurl import LnurlPayActionResponse, LnurlPayResponse
+from lnurl import execute_pay_request as lnurlp
+from lnurl import handle as lnurl_handle
 from lnurl.core import encode as lnurl_encode
 
 
-async def get_pr(ln_address):
-    data = await api_lnurlscan(ln_address)
-    if data.get("status") == "ERROR":
-        return
+async def get_pr(ln_address: str, amount_msat: int = 10_000) -> str | None:
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url=f"{data['callback']}?amount=10000")
-            if response.status_code != 200:
-                return
-            return response.json()["pr"]
-    except Exception:
+        res = await lnurl_handle(ln_address)
+        if not isinstance(res, LnurlPayResponse):
+            return None
+        res2 = await lnurlp(
+            res,
+            msat=str(amount_msat),
+            user_agent=settings.user_agent,
+            timeout=5,
+        )
+        if not isinstance(res, LnurlPayActionResponse):
+            return None
+        return res2.pr
+    except Exception as e:
+        print(f"Error handling LNURL: {e}")
         return None
 
 

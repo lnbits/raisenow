@@ -1,9 +1,9 @@
 {
-  "repos": [
-    {
-      "id": "raisenow",
-      "organisation": "lnbits",
-      "repository": "raisenow"
-    }
-  ]
+    "repos": [
+        {
+            "id": "raisenow",
+            "organisation": "lnbits",
+            "repository": "raisenow"
+        }
+    ]
 }

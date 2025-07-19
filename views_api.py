@@ -198,6 +198,10 @@ async def api_participant_update(
     dependencies=[Depends(require_invoice_key)],
 )
 async def api_participant_create(req: Request, data: CreateParticipantData):
+    if not data.lnaddress:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail="lnaddress is required"
+        )
     pay_req = await get_pr(data.lnaddress)
     if not pay_req:
         raise HTTPException(
