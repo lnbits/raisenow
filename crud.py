@@ -1,5 +1,3 @@
-from typing import List, Union
-
 from lnbits.db import Database
 from lnbits.helpers import urlsafe_short_hash
 
@@ -23,7 +21,7 @@ async def get_raisenow(raisenow_id: str) -> RaiseNow:
     )
 
 
-async def get_raisenows(wallet_ids: Union[str, List[str]]) -> List[RaiseNow]:
+async def get_raisenows(wallet_ids: str | list[str]) -> list[RaiseNow]:
     if isinstance(wallet_ids, str):
         wallet_ids = [wallet_ids]
     q = ",".join([f"'{wallet_id}'" for wallet_id in wallet_ids])
@@ -66,7 +64,7 @@ async def get_participant(participant_id: str) -> Participant:
     )
 
 
-async def get_participants(raisenow_id: str) -> List[Participant]:
+async def get_participants(raisenow_id: str) -> list[Participant]:
     return await db.fetchall(
         "SELECT * FROM raisenow.participants WHERE raisenow = :raisenow",
         {"raisenow": raisenow_id},
