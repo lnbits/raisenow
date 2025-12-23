@@ -205,7 +205,7 @@ async def api_participant_create(req: Request, data: CreateParticipantData):
             status_code=HTTPStatus.BAD_REQUEST, detail="lnaddress is required"
         )
     try:
-        res = lnurl_handle(data.lnaddress)
+        res = await lnurl_handle(data.lnaddress)
     except Exception as exc:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail=f"lnaddress is invalid: {exc}"
