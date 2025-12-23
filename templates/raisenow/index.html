@@ -369,7 +369,7 @@
 
   <q-dialog v-model="urlDialog.show" position="top">
     <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
-      <lnbits-qrcode :value="qrValue"></lnbits-qrcode>
+      <lnbits-qrcode-lnurl :url="qrValue"></lnbits-qrcode-lnurl>
       <div class="row q-mt-lg">
         <q-btn v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
       </div>
