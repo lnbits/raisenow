@@ -30,6 +30,8 @@ async def on_invoice_paid(payment: Payment) -> None:
     record_id = payment.extra.get("recordId")
     amount_msat = int(payment.amount)
     safe_amount_msat = amount_msat - fee_reserve(amount_msat)
+    # sat precision
+    safe_amount_msat = (int(safe_amount_msat // 1000)) * 1000
 
     participant_record = await get_participant(str(record_id))
     if not participant_record:
@@ -49,9 +51,15 @@ async def on_invoice_paid(payment: Payment) -> None:
     )
     if not participant_record.lnaddress:
         return
-    payment_request = await get_pr_from_lnurl(
-        participant_record.lnaddress, safe_amount_msat
-    )
+
+    try:
+        payment_request = await get_pr_from_lnurl(
+            participant_record.lnaddress, abs(safe_amount_msat)
+        )
+    except Exception as exc:
+        print(f"Could not get payment request from lnurl: {exc}")
+        return
+
     extra = {
         "participant_id": record_id,
         "participant_name": participant_record.name,
