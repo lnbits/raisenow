@@ -1,6 +1,5 @@
 # Data models for your extension
 
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -10,23 +9,23 @@ from pydantic import BaseModel
 class CreateRaiseNowData(BaseModel):
     name: str
     wallet: str
-    description: Optional[str]
-    background_image: Optional[str]
-    header_image: Optional[str]
-    total: Optional[int]
-    live_dates: Optional[str]
+    description: str | None
+    background_image: str | None
+    header_image: str | None
+    total: int | None
+    live_dates: str | None
 
 
 class RaiseNow(BaseModel):
     id: str
     name: str
     wallet: str
-    description: Optional[str]
-    background_image: Optional[str]
-    header_image: Optional[str]
-    total: Optional[int] = 0
-    live_dates: Optional[str]
-    lnurlpay: Optional[str]
+    description: str | None
+    background_image: str | None
+    header_image: str | None
+    total: int | None = 0
+    live_dates: str | None
+    lnurlpay: str | None
 
 
 # Participants
@@ -35,18 +34,18 @@ class RaiseNow(BaseModel):
 class CreateParticipantData(BaseModel):
     name: str
     raisenow: str
-    description: Optional[str]
-    profile_image: Optional[str]
-    total: Optional[int] = 0
-    lnaddress: Optional[str]
+    description: str | None
+    profile_image: str | None
+    total: int | None = 0
+    lnaddress: str | None
 
 
 class Participant(BaseModel):
     id: str
     name: str
     raisenow: str
-    description: Optional[str]
-    profile_image: Optional[str]
-    total: Optional[int]
-    lnaddress: Optional[str]
-    lnurlpay: Optional[str]
+    description: str | None
+    profile_image: str | None
+    total: int | None
+    lnaddress: str | None
+    lnurlpay: str | None

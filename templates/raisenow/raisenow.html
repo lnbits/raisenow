@@ -18,7 +18,6 @@
       :class="`col-${columnCount} q-ml-${sizes[spaceCount]}`"
     >
       <q-card
-        @click="copyText(participant.lnurlpay)"
         class="q-pa-md cursor-pointer"
         :class="participant.received_payment ? 'bg-secondary' : ''"
       >
@@ -38,13 +37,9 @@
           </div>
         </div>
         <div class="text-center q-mt-md q-pb-md">
-          <q-responsive :ratio="1">
-            <lnbits-qrcode
-              :value="participant.lnurlpay"
-              :options="{width: 200}"
-              class="rounded-borders"
-            ></lnbits-qrcode>
-          </q-responsive>
+            <lnbits-qrcode-lnurl
+              :url="participant.lnurlpay"
+            ></lnbits-qrcode-lnurl>
         </div>
         <div class="row">
           <div class="col-12">
@@ -132,17 +127,6 @@
       this.startWebSocketListener();
     },
     methods: {
-      // Copy text to clipboard
-      copyText(text) {
-        navigator.clipboard.writeText(text).then(() => {
-          this.$q.notify({
-            message: "Link copied to clipboard",
-            color: "green",
-            timeout: 1000,
-          });
-        });
-      },
-
       // Adjust column count
       resizeColumns(increase = false) {
         this.columnCount = increase

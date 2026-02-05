@@ -41,7 +41,7 @@ def raisenow_start():
 __all__ = [
     "db",
     "raisenow_ext",
+    "raisenow_start",
     "raisenow_static_files",
     "raisenow_stop",
-    "raisenow_start",
 ]

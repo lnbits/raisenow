@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from lnbits.core.crud import get_user
 from lnbits.core.models import WalletTypeInfo
 from lnbits.decorators import require_admin_key, require_invoice_key
+from lnurl import LnurlPayResponse
+from lnurl import handle as lnurl_handle
 from loguru import logger
 
 from .crud import (
@@ -18,7 +20,7 @@ from .crud import (
     update_participant,
     update_raisenow,
 )
-from .helpers import get_pr, lnurler
+from .helpers import lnurler
 from .models import CreateParticipantData, CreateRaiseNowData, Participant, RaiseNow
 
 raisenow_api_router = APIRouter()
@@ -198,10 +200,20 @@ async def api_participant_update(
     dependencies=[Depends(require_invoice_key)],
 )
 async def api_participant_create(req: Request, data: CreateParticipantData):
-    pay_req = await get_pr(data.lnaddress)
-    if not pay_req:
+    if not data.lnaddress:
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail="lnaddress check failed"
+            status_code=HTTPStatus.BAD_REQUEST, detail="lnaddress is required"
+        )
+    try:
+        res = await lnurl_handle(data.lnaddress)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail=f"lnaddress is invalid: {exc}"
+        ) from exc
+    if not isinstance(res, LnurlPayResponse):
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="lnaddress is not a valid LNURL Pay",
         )
     participant = await create_participant(data)
     if not participant:

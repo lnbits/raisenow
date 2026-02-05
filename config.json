@@ -2,7 +2,8 @@
   "name": "RaiseNow",
   "short_description": "Raise funds for multiple participants",
   "tile": "/raisenow/static/image/raisenow.png",
-  "min_lnbits_version": "1.0.0",
+  "version": "0.1.0",
+  "min_lnbits_version": "1.3.0",
   "contributors": [
     {
       "name": "Ben Arc",
@@ -13,14 +14,8 @@
       "name": "Chris Moss",
       "uri": "https://github.com/zebedeeio",
       "role": "Idea"
-    },
-    {
-      "name": "Herald",
-      "uri": "",
-      "role": "Named by"
     }
   ],
-  "images": [],
   "description_md": "https://raw.githubusercontent.com/lnbits/tpos/main/description.md",
   "terms_and_conditions_md": "https://raw.githubusercontent.com/lnbits/tpos/main/toc.md",
   "license": "MIT"
